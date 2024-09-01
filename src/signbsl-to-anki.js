@@ -23,6 +23,51 @@ const IS_SIMULATE_MODE = false;
 */
 
 
+class WordAndVideos {
+    constructor( word, video ){
+        this.word = word.toLowerCase();
+        this.videos = [ video ];
+        this.converted_video_file_path = "";
+    }
+
+    addVideoURL( url ){
+        this.videos = this.videos.concat( url );
+    }
+
+    setConvertedVideoFilePath( k, converted_video_file_path ) {
+        this.converted_video_file_path = converted_video_file_path;
+    }
+
+    getWord() {
+        return this.word;
+    }
+
+    getVideoURLs(){
+        return this.videos;
+    }
+
+    getVideoByIndex( index ) {
+        return this.videos[ index ];
+    }
+
+    isTheSameWord( new_word ) {
+        if( this.word.toLowerCase() == new_word.toLowerCase() ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    toDBLine( video_index, card_model_type ) {
+        const flashcard = new Flashcard( this.word, card_model_type, [ this.videos[ video_index ] ] );
+        return flashcard.toDBLine();
+    }
+
+    toArray() {
+        return [[ this.word, this.videos ]];
+    }
+}
+
 
 class Flashcard {
     static DIVIDER = "\t";
@@ -30,6 +75,8 @@ class Flashcard {
     static INDEX_WORD            = 0;
     static INDEX_CARD_MODEL_TYPE = 1;
     static INDEX_MEDIA_FILES     = 2;
+    static CARD_MODEL_VIDEO_FRONT = "signlanguage-video-front-card-model"
+    static CARD_MODEL_TEXT_FRONT  = "signlanguage-text-front-card-model"
     constructor( word, card_model_type, media_files ){
         this.word = word;
         this.card_model_type = card_model_type;
@@ -66,6 +113,7 @@ class Flashcard {
         return flashcard;
     }
 }
+
 
 function generateFilePathForWord( video_title, file_extension ) {
     does_file_exist = true;
@@ -115,7 +163,6 @@ function fake_download( url, file_output_path ) {
 function get_all_video_url_and_names( html_file ) {
     let command_output;
     
-    all_videos = [];
     all_words  = [];
     command_video_url_and_name = './video_url_and_name.py';
     try {
@@ -124,18 +171,37 @@ function get_all_video_url_and_names( html_file ) {
         list_of_videos_and_words = command_output.trim().split("\n");
 
         for( let i = 0; i < list_of_videos_and_words.length; i++ ){
-            all_words  = all_words.concat(  list_of_videos_and_words[i].split("\t")[0].toLowerCase() );
-            all_videos = all_videos.concat( list_of_videos_and_words[i].split("\t")[1] );
+            const word  = list_of_videos_and_words[i].split("\t")[0];
+            const video = list_of_videos_and_words[i].split("\t")[1];
+
+            // Does the word already exist in list?
+            var word_index = -1;
+            for( let k = 0; k < all_words.length; k++ ) {
+                if( all_words[k].isTheSameWord( word ) ) {
+                    word_index = k;
+                    break;
+                }
+            }
+
+            if( word_index != -1 ){
+                // Add the video to the existing list.
+                all_words[ word_index ].addVideoURL( video );
+            } else {
+                // Add the video and word to the list.
+                new_word = new WordAndVideos( word, video );
+                all_words  = all_words.concat( new_word );
+            }
         }
     } catch (error) {
         console.error(`Error executing command: ${error.message}`);
     }
 
-    return [ all_words, all_videos ];
+    return all_words;
 }
 
 function fake_get_all_video_url_and_names( html_file ) {
-    return [["letter aaa", "letter bb"], ["poo-c5aafe.webm","poo-847fda.webm"]];
+    word = new WordAndVideos( "poo", "poo-c5aafe.webm" );
+    return [ word ];
 }
 
 //-----------------------\\
@@ -164,19 +230,20 @@ module.exports = {
         } else {
             all_videos_and_words = get_all_video_url_and_names( html_path );
         }
-        
-        // Download all videos
-        var all_video_filepaths = [];
 
-        for( let i = 0; i < all_videos_and_words[0].length; i++ ) {
-            const word = all_videos_and_words[0][i];
-            const url  = all_videos_and_words[1][i];
+        // Download all videos
+        for( let i = 0; i < all_videos_and_words.length; i++ ) {
+        const word = all_videos_and_words[i];
+        number_of_videos = word.getVideoURLs().length;
+
+        for( let k = 0; k < number_of_videos; k++ ) {
+            const url = word.getVideoURLs()[k];
 
             if( IS_SIMULATE_MODE ) {
                 file_path = "./media/" + fakeGenerateFilePathForWord( url , '');
             } else {
                 file_extension = path.extname( url );
-                file_path = generateFilePathForWord( word, file_extension );
+                file_path = generateFilePathForWord( word.getWord(), file_extension );
             }
         
             console.log("Downloading from " + url);
@@ -188,7 +255,7 @@ module.exports = {
         
             console.log("Converting to webm...")
             webm_file_path = path.parse(file_path).dir + "/" + path.parse(file_path).name + ".webm"
-            all_video_filepaths = all_video_filepaths.concat( webm_file_path )
+            all_videos_and_words[i].setConvertedVideoFilePath( webm_file_path );
 
             if( IS_SIMULATE_MODE ) {
                 console.log( "fake converting to webm for file " + file_path + " to " + webm_file_path );
@@ -204,7 +271,8 @@ module.exports = {
                 }
             }
         
-            anki_line = word + "\t" + webm_file_path;
+        anki_line = word.getWord() + "\t" + webm_file_path;
+        }
         }
 
 
@@ -219,13 +287,12 @@ module.exports = {
         // Create flashcard DB lines.
         // Create a flashcard showing the sign language video as the front of the card. Text on back of card.
         all_videos_for_reverse_card = []
-        all_cards = []
-        for( let i = 0; i < all_video_filepaths.length; i++ ) {
-            card = new Flashcard( word, "signlanguage-video-front-card-model", [ all_video_filepaths[i]] )
-            all_cards = all_cards.concat( [card] )
-            all_videos_for_reverse_card = all_videos_for_reverse_card.concat ( [ word, all_video_filepaths[i] ] )
-        }
-
+        //all_cards = []
+        //for( let i = 0; i < all_video_filepaths.length; i++ ) {
+        //    card = new Flashcard( word, Flashcard.CARD_MODEL_VIDEO_FRONT, [ all_video_filepaths[i]] )
+        //    all_cards = all_cards.concat( [card] )
+        //    all_videos_for_reverse_card = all_videos_for_reverse_card.concat ( [ word, all_video_filepaths[i] ] )
+        //}
 
         reverse_card = new Flashcard( word, "signlanguagetext-front-card-model", all_videos_for_reverse_card )
 
@@ -234,11 +301,18 @@ module.exports = {
         // TODO: make card with all videos - make a way to say how many different versions there are so we can add it to the flashcard as bracets e.g. brown(2).
 
 
-        all_db_card_lines = ""
-        for( let i = 0; i < all_cards.length; i++ ){
-            all_db_card_lines += all_cards[i].toDBLine();
-            if( i < (all_cards.length - 1) ) {
-                all_db_card_lines += "\n";
+        var all_db_card_lines = ""
+        for( let i = 0; i < all_videos_and_words.length; i++ ) {
+            const word = all_videos_and_words[i];
+            const number_of_videos = word.getVideoURLs().length;
+            for( let k = 0; k < number_of_videos; k++ ) {
+                all_db_card_lines += word.toDBLine( k, Flashcard.CARD_MODEL_VIDEO_FRONT );
+            
+                if( ( i == ( all_videos_and_words.length ) ) & ( k == (word.getVideoURLs().length - 1) )) {
+                    all_db_card_lines += "";
+                } else {
+                    all_db_card_lines += "\n";
+                }
             }
         }
         //all_db_card_lines += reverse_card.toDBLine() + "\n"
@@ -256,7 +330,12 @@ module.exports = {
             console.error('Error appending to file:', err.message);
         }
 
-        return [ id, [all_videos_and_words[0], all_video_filepaths] ];
+        var all_words = []
+        for( let i = 0; i < all_videos_and_words.length; i++ ) {
+            all_words = all_words.concat( all_videos_and_words[i].toArray() );
+        }
+
+        return [ id, all_words ];
     },
 
 

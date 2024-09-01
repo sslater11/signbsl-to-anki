@@ -102,7 +102,7 @@ You should have received a copy of the GNU General Public License along with thi
                 hopefully this script will just do nothing.
                 make it return a 'signbsl server connection error' 
         */
-        const VIDEO_ROW_INDEX_PREFIX = "video_row_";
+        const VIDEO_INDEX_PREFIX     = "video_row_";
         const CHECKBOX_INDEX_PREFIX  = "video_checkbox_";
 
         const COLOR_PASTEL_LIGHT_BLUE = "#b8e5ff";
@@ -113,12 +113,13 @@ You should have received a copy of the GNU General Public License along with thi
         const COLOR_PASTEL_PURPLE     = "#d3b8d4";
 
         //const COLOR_NOT_HIGHLIGHTED_RABLE_ROW = "#ebebeb";
-        const COLOR_NOT_HIGHLIGHTED_RABLE_ROW = "#f4f4f4";
+        const COLOR_NOT_HIGHLIGHTED_RABLE_ROW = "#f0f0f0";
         const COLOR_HIGHLIGHTED_TABLE_ROW = COLOR_PASTEL_LIGHT_BLUE;
 
         var id = ""; // Used to make each search request unique.
-        var video_count = 0; // Used to make each search request unique.
-        var list_of_is_checkbox_ticked = []; // Keep track of whether each checkbox has been ticked or not.
+        var dict_of_is_checkbox_ticked = {}; // Keep track of whether each checkbox has been ticked or not.
+        var all_words = [];
+
         document.getElementById( "create_anki_deck_button" ).disabled = true;
         document.getElementById( "div_user_selection" ).style.opacity = 0;
 
@@ -135,26 +136,38 @@ You should have received a copy of the GNU General Public License along with thi
             document.body.removeChild(element);
         }
 
-        function click_checkbox( row_index, should_change_checkboxes_value = false ) {
+        function getCheckboxID( word_index, video_index ) {
+            return CHECKBOX_INDEX_PREFIX + "_" + word_index + "_" + video_index;
+        }
+
+        function getVideoID( word_index, video_index ) {
+            return VIDEO_INDEX_PREFIX    + "_" + word_index + "_" + video_index;
+        }
+
+        function click_checkbox( word_index, video_index, should_change_checkboxes_value = false ) {
+            const checkbox_id = getCheckboxID( word_index, video_index );
             if( should_change_checkboxes_value ) {
-                list_of_is_checkbox_ticked[ row_index ] = ! list_of_is_checkbox_ticked[ row_index ];
-                var checkbox = document.getElementById( CHECKBOX_INDEX_PREFIX  + row_index );
-                checkbox.checked = list_of_is_checkbox_ticked[ row_index ];
+                dict_of_is_checkbox_ticked[ checkbox_id ] = ! dict_of_is_checkbox_ticked[ checkbox_id ];
+                var checkbox = document.getElementById( checkbox_id );
+                checkbox.checked = dict_of_is_checkbox_ticked[ checkbox_id ];
             }
-            var row = document.getElementById( VIDEO_ROW_INDEX_PREFIX + row_index );
+            var row = document.getElementById( getVideoID( word_index, video_index ) );
             
-            if( list_of_is_checkbox_ticked[ row_index ] ) {
+            if( dict_of_is_checkbox_ticked[ checkbox_id ] ) {
                 row.setAttribute( "bgColor", COLOR_HIGHLIGHTED_TABLE_ROW );
-                console.log( "Highlighting row " + row_index + "to " + COLOR_HIGHLIGHTED_TABLE_ROW );
+                //console.log( "Highlighting row " + getVideoID(i,k) + "to " + COLOR_HIGHLIGHTED_TABLE_ROW );
             } else {
                 row.setAttribute( "bgColor", COLOR_NOT_HIGHLIGHTED_RABLE_ROW );
-                console.log( "Highlighting row " + row_index + "to " + COLOR_NOT_HIGHLIGHTED_RABLE_ROW );
+                //console.log( "Highlighting row " + getVideoID(i,k) + "to " + COLOR_NOT_HIGHLIGHTED_RABLE_ROW );
             }
         }
 
-        function generate_videos_table(all_video_titles, all_videos) {
-            list_of_is_checkbox_ticked = [];
-            video_count = all_videos.length;
+        function generate_videos_table( list_of_all_words ) {
+            all_words = list_of_all_words;
+            const INDEX_WORD   = 0;
+            const INDEX_VIDEOS = 1;
+            dict_of_is_checkbox_ticked = {};
+
             document.getElementById( "create_anki_deck_button" ).disabled = false;
             document.getElementById( "div_user_selection" ).style.opacity = 1;
 
@@ -164,13 +177,15 @@ You should have received a copy of the GNU General Public License along with thi
                 table_div.removeChild( table_div.firstChild );
             }
 
+            for( let i = 0; i < all_words.length; i++ ) {
             // Create a new table.
             var table = document.createElement('TABLE');
             var table_body = document.createElement('TBODY');
             table.appendChild(table_body);
 
             // Add all videos to the table.
-            for (var i = 0; i < all_videos.length; i++) {
+            const number_of_videos = all_words[i][INDEX_VIDEOS].length;
+            for (let k = 0; k < number_of_videos; k++) {
                 var tr = document.createElement('TR');
                 table_body.appendChild(tr);
 
@@ -178,11 +193,11 @@ You should have received a copy of the GNU General Public License along with thi
                 var td_2 = document.createElement('TD');
 
                 // Add video cell to table.
-                // Video HTML: var video_html = '" id="myvid_' + i + '" src="' + all_videos[i] + '"loop="true" autoplay="autoplay" controlslist="nodownload" controls=""';
+                // Video HTML: var video_html = '" id="myvid_' + k + '" src="' + all_words[i][INDEX_VIDEOS][k] + '"loop="true" autoplay="autoplay" controlslist="nodownload" controls=""';
                 var video_element = document.createElement('video');
                 video_element.muted = true;
-                video_element.setAttribute( "id",           "myvid_" + i );
-                video_element.setAttribute( "src",          all_videos[i] );
+                video_element.setAttribute( "id",           getCheckboxID( i, k ) );
+                video_element.setAttribute( "src",          all_words[i][INDEX_VIDEOS][k] );
                 video_element.setAttribute( "loop",         "true" );
                 video_element.setAttribute( "autoplay",     "true" );
                 video_element.setAttribute( "width",        "50%" );
@@ -191,33 +206,35 @@ You should have received a copy of the GNU General Public License along with thi
                 //video_element.setAttribute( "controls",     "" );
                 td_2.appendChild( video_element );
                 td_2.appendChild( document.createElement("br") );
-                td_2.appendChild( document.createTextNode( all_video_titles[i] ) );
+                td_2.appendChild( document.createTextNode( all_words[i][INDEX_WORD] ) );
 
 
                 // Add checkbox cell to table.
-                checkbox_element = document.createElement("input");
+                var checkbox_element = document.createElement("input");
                 checkbox_element.setAttribute( "type", "checkbox" );
-                checkbox_element.setAttribute( "id", CHECKBOX_INDEX_PREFIX + i );
+                checkbox_element.setAttribute( "id", getCheckboxID( i, k ) );
                 //checkbox_element.setAttribute( "onclick", "click_checkbox(" + i + ")" );
                 checkbox_element.setAttribute( "checked", "true" );
-                list_of_is_checkbox_ticked = list_of_is_checkbox_ticked.concat( true ); // Used to keep track of checkbox value.
+                dict_of_is_checkbox_ticked[ getCheckboxID( i, k ) ] = true; // Used to keep track of checkbox value.
+                //dict_of_is_checkbox_ticked = dict_of_is_checkbox_ticked.concat( true ); // Used to keep track of checkbox value.
                 td_1.appendChild( document.createElement("br") );
                 td_1.appendChild( checkbox_element );
 
                 tr.appendChild(td_1);
                 tr.appendChild(td_2);
 
-                tr.setAttribute( "id", VIDEO_ROW_INDEX_PREFIX + i );
-                tr.setAttribute( "onclick", "click_checkbox(" + i + ", true )" );
+                tr.setAttribute( "id", getVideoID( i, k ) );
+                tr.setAttribute( "onclick", "click_checkbox(" + i + ", " + k + ", true )" );
             }
 
             // Add table to our div tag.
             table_div.appendChild( table );
 
             // This will highlight rows of ticked videos :).
-            for( let i = 0; i < list_of_is_checkbox_ticked.length; i++ ) {
+            for (let k = 0; k < number_of_videos; k++) {
                 // Can only be ran after the table has been created.
-                click_checkbox( i, false );
+                click_checkbox( i, k, false );
+            }
             }
         }
 
@@ -237,11 +254,9 @@ You should have received a copy of the GNU General Public License along with thi
                     body: JSON.stringify( input_data )
                 });
 
-                const data_from_client = await response.json();
-                id = data_from_client[0];
-                console.log( "one: " + data_from_client[1][0][0] );
-                console.log( "two: " + data_from_client[1][1][0] );
-                generate_videos_table( data_from_client[1][0], data_from_client[1][1] );
+                const data_from_server = await response.json();
+                id = data_from_server[0];
+                generate_videos_table( data_from_server[1] );
             // Convert data into table
             } catch (error) {
                 console.error('Error:', error);
@@ -252,13 +267,21 @@ You should have received a copy of the GNU General Public License along with thi
 
         const user_selection_form = document.getElementById("user_selection_form");
         user_selection_form.addEventListener("submit", async (event) => {
+            /*
+            
+            
+            broken, because we need to have every word saved in memory, then we access it to send to the server.
+            
+            
+            
+            */
             console.log("function has been called")
             event.preventDefault(); // Prevent default form submission
 
             // Generate a list of videos with checkbox values
             //var selected_videos = id + "";
             var selected_videos = [];
-            for( let i = 0; i < video_count; i++ ) {
+            for( let i = 0; i < dict_of_is_checkbox_ticked.length; i++ ) {
                 const current_checkbox = document.getElementById( CHECKBOX_INDEX_PREFIX + i);
                 is_video_chosen = current_checkbox.checked;
                 selected_videos = selected_videos.concat(is_video_chosen);
@@ -277,8 +300,8 @@ You should have received a copy of the GNU General Public License along with thi
                     body: JSON.stringify( input_data )
                 });
 
-                const data_from_client = await response.json();
-                download_file( data_from_client[0] );
+                const data_from_server = await response.json();
+                download_file( data_from_server[0] );
             } catch (error) {
                 console.error('Error:', error);
             }
