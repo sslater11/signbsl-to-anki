@@ -7,14 +7,14 @@ The user will type in a word and this will generate an anki deck for the searche
 A master deck will also be created which contains all the words that have been searched, so the user doesn't have to constantly import the generated anki deck, they can update it whenever they care to.
 
 # Dependencies
-node
-express
-genanki
+* node
+* express
+* genanki
 
 
 # Install
-npm install express
-pip3 install genanki --break-system-packages
+* npm install express
+* pip3 install genanki --break-system-packages
 
 # Usage
 node src/signbsl-to-anki-server.js
@@ -25,5 +25,5 @@ node src/signbsl-to-anki-server.js
 * Click "Create Anki Deck".
 * Save the generated deck to your device.
 * Open Anki or AnkiDroid.
-* File > Import on PC.  -or- On Android, tap the three lines in top right > Import.
+* File > Import on PC  -- or -- On Android, tap the three lines in top right > Import.
 
