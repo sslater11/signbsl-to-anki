@@ -119,13 +119,12 @@ function get_all_video_url_and_names( html_file ) {
     all_words  = [];
     command_video_url_and_name = './video_url_and_name.py';
     try {
-        command_output = execSync(command_video_url_and_name + ' ' + html_file, { encoding: 'utf-8' });
+        command_output = execSync( command_video_url_and_name + ' ' + html_file, { encoding: 'utf-8' } );
 
-        videos = command_output.trim();
-        list_of_videos_and_words = videos.split("\n");
+        list_of_videos_and_words = command_output.trim().split("\n");
 
         for( let i = 0; i < list_of_videos_and_words.length; i++ ){
-            all_words  = all_words.concat(  list_of_videos_and_words[i].split("\t")[0] );
+            all_words  = all_words.concat(  list_of_videos_and_words[i].split("\t")[0].toLowerCase() );
             all_videos = all_videos.concat( list_of_videos_and_words[i].split("\t")[1] );
         }
     } catch (error) {
@@ -146,6 +145,7 @@ module.exports = {
     scrape_signbsl : function ( words ) {
         var id = generateRandomString(8);
         var word = words[0];
+        word = word.toLowerCase(); // make words match.
 
         html_path = "./signbsl-html/" + word + "-signbsl.com.html";
         console.log("Getting html file.");

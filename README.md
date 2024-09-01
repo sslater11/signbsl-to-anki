@@ -17,7 +17,7 @@ A master deck will also be created which contains all the words that have been s
 * pip3 install genanki --break-system-packages
 
 # Usage
-node src/signbsl-to-anki-server.js
+cd src; ./server-signbsl-to-anki.js
 * Connect to your server on port 3000.
 * Type in a word,
 * Click "Find Signs".
