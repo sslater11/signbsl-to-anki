@@ -1,0 +1,27 @@
+{
+  "name": "signbsl-to-anki",
+  "version": "0.5.0",
+  "description": "A server to create BSL flashcards for anki by using signbsl.com",
+  "main": "src/signbsl-to-anki.js",
+  "scripts": {
+    "test": "node src/signbsl-to-anki.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sslater11/signbsl-to-anki.git"
+  },
+  "keywords": [
+    "signbsl",
+    "bsl",
+    "anki"
+  ],
+  "author": "Simon Slater",
+  "license": "GPL-2.0-only",
+  "bugs": {
+    "url": "https://github.com/sslater11/signbsl-to-anki/issues"
+  },
+  "homepage": "https://github.com/sslater11/signbsl-to-anki#readme",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

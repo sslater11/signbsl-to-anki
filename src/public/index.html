@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<!-- © Copyright 2024, Simon Slater
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignBSL to Anki</title>
+</head>
+
+
+<style>
+    .center-all {
+        display: flex;
+        justify-content: center;
+        font-family:Arial, Helvetica, sans-serif;
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    table {
+        border-spacing: 0;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    td {
+        padding:2rem;
+        font-family:Arial, Helvetica, sans-serif;
+        font-size: 3rem;
+        text-align: center;
+        padding-left:  1rem;
+        padding-right: 1rem;
+
+        border-style: solid;
+        border-width: 10;
+        border-color: black;
+    }
+    input[type="text"] {
+        width: 10rem;
+    }
+    input[type="checkbox"] {
+        zoom: 3;
+    }
+    .table-header {
+        font-weight: bold;
+    }
+
+    .create-anki-deck-button {
+        font-family:Arial, Helvetica, sans-serif;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-text {
+        font-family:Arial, Helvetica, sans-serif;
+        font-size: 2rem;
+        text-align: center;
+    }
+</style>
+
+<body>
+    <div class="center-all">
+        <h1>SignBSL to Anki Flashcard Creator</h1>
+    </div>
+    <div class="center-all">
+        <p>Type a word you would like to make a flashcard for</p>
+    </div>
+    <div class="center-all">
+        <form id="search_form" method=POST">
+            <input class="search-text" type="text" id="text_input" name="text_input" required>
+            <button class="search-text" type="submit" formaction="/submit">Find Signs</button>
+        </form>
+    </div>
+    <br>
+    <br>
+    <br>
+    <div class="center-all">
+        <div id="div_user_selection">
+            <form id="user_selection_form" method="POST">
+                <button type="submit" formaction="/submit_users_selected_videos" id="create_anki_deck_button" class="create-anki-deck-button" >Create Anki Deck</button>
+            </form>
+        </div>
+
+
+    </div>
+    <div class="center-all">
+        <div id="div_table_for_videos">
+            <!-- table tag goes here :)-->
+        </div>
+    </div>
+
+    <script>
+        /* TODO: test what happens when signbsl is down and we can't get any data from it.
+                hopefully this script will just do nothing.
+                make it return a 'signbsl server connection error' 
+        */
+        const VIDEO_ROW_INDEX_PREFIX = "video_row_";
+        const CHECKBOX_INDEX_PREFIX  = "video_checkbox_";
+
+        const COLOR_PASTEL_LIGHT_BLUE = "#b8e5ff";
+        const COLOR_PASTEL_PINK       = "#f4b9c9";
+        const COLOR_PASTEL_BLUE       = "#b9e3ea";
+        const COLOR_PASTEL_SALMON     = "#ffd9c8";
+        const COLOR_PASTEL_YELLOW     = "#ffffc1";
+        const COLOR_PASTEL_PURPLE     = "#d3b8d4";
+
+        //const COLOR_NOT_HIGHLIGHTED_RABLE_ROW = "#ebebeb";
+        const COLOR_NOT_HIGHLIGHTED_RABLE_ROW = "#f4f4f4";
+        const COLOR_HIGHLIGHTED_TABLE_ROW = COLOR_PASTEL_LIGHT_BLUE;
+
+        var id = ""; // Used to make each search request unique.
+        var video_count = 0; // Used to make each search request unique.
+        var list_of_is_checkbox_ticked = []; // Keep track of whether each checkbox has been ticked or not.
+        document.getElementById( "create_anki_deck_button" ).disabled = true;
+        document.getElementById( "div_user_selection" ).style.opacity = 0;
+
+        // code from Harvey Kadyanji @ https://stackoverflow.com/questions/36903527/how-do-you-automatically-download-a-file-in-javascript
+        const download_file = (file) => {
+            const element = document.createElement('a');
+            element.setAttribute('href', file); // path to file on server.
+            element.setAttribute('download', file.slice(6)); // slice the /decks/ off the start of the string. // This is for the filename on the download.
+
+            element.style.display = 'none';
+
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        function click_checkbox( row_index, should_change_checkboxes_value = false ) {
+            if( should_change_checkboxes_value ) {
+                list_of_is_checkbox_ticked[ row_index ] = ! list_of_is_checkbox_ticked[ row_index ];
+                var checkbox = document.getElementById( CHECKBOX_INDEX_PREFIX  + row_index );
+                checkbox.checked = list_of_is_checkbox_ticked[ row_index ];
+            }
+            var row = document.getElementById( VIDEO_ROW_INDEX_PREFIX + row_index );
+            
+            if( list_of_is_checkbox_ticked[ row_index ] ) {
+                row.setAttribute( "bgColor", COLOR_HIGHLIGHTED_TABLE_ROW );
+                console.log( "Highlighting row " + row_index + "to " + COLOR_HIGHLIGHTED_TABLE_ROW );
+            } else {
+                row.setAttribute( "bgColor", COLOR_NOT_HIGHLIGHTED_RABLE_ROW );
+                console.log( "Highlighting row " + row_index + "to " + COLOR_NOT_HIGHLIGHTED_RABLE_ROW );
+            }
+        }
+
+        function generate_videos_table(all_video_titles, all_videos) {
+            list_of_is_checkbox_ticked = [];
+            video_count = all_videos.length;
+            document.getElementById( "create_anki_deck_button" ).disabled = false;
+            document.getElementById( "div_user_selection" ).style.opacity = 1;
+
+            // Remove any old tables from previous runs.
+            var table_div = document.getElementById('div_table_for_videos');
+            while( table_div.firstChild ) {
+                table_div.removeChild( table_div.firstChild );
+            }
+
+            // Create a new table.
+            var table = document.createElement('TABLE');
+            var table_body = document.createElement('TBODY');
+            table.appendChild(table_body);
+
+            // Add all videos to the table.
+            for (var i = 0; i < all_videos.length; i++) {
+                var tr = document.createElement('TR');
+                table_body.appendChild(tr);
+
+                var td_1 = document.createElement('TD');
+                var td_2 = document.createElement('TD');
+
+                // Add video cell to table.
+                // Video HTML: var video_html = '" id="myvid_' + i + '" src="' + all_videos[i] + '"loop="true" autoplay="autoplay" controlslist="nodownload" controls=""';
+                var video_element = document.createElement('video');
+                video_element.muted = true;
+                video_element.setAttribute( "id",           "myvid_" + i );
+                video_element.setAttribute( "src",          all_videos[i] );
+                video_element.setAttribute( "loop",         "true" );
+                video_element.setAttribute( "autoplay",     "true" );
+                video_element.setAttribute( "width",        "50%" );
+                video_element.setAttribute( "height",       "50%" );
+                //video_element.setAttribute( "controlslist", "nodownload" );
+                //video_element.setAttribute( "controls",     "" );
+                td_2.appendChild( video_element );
+                td_2.appendChild( document.createElement("br") );
+                td_2.appendChild( document.createTextNode( all_video_titles[i] ) );
+
+
+                // Add checkbox cell to table.
+                checkbox_element = document.createElement("input");
+                checkbox_element.setAttribute( "type", "checkbox" );
+                checkbox_element.setAttribute( "id", CHECKBOX_INDEX_PREFIX + i );
+                //checkbox_element.setAttribute( "onclick", "click_checkbox(" + i + ")" );
+                checkbox_element.setAttribute( "checked", "true" );
+                list_of_is_checkbox_ticked = list_of_is_checkbox_ticked.concat( true ); // Used to keep track of checkbox value.
+                td_1.appendChild( document.createElement("br") );
+                td_1.appendChild( checkbox_element );
+
+                tr.appendChild(td_1);
+                tr.appendChild(td_2);
+
+                tr.setAttribute( "id", VIDEO_ROW_INDEX_PREFIX + i );
+                tr.setAttribute( "onclick", "click_checkbox(" + i + ", true )" );
+            }
+
+            // Add table to our div tag.
+            table_div.appendChild( table );
+
+            // This will highlight rows of ticked videos :).
+            for( let i = 0; i < list_of_is_checkbox_ticked.length; i++ ) {
+                // Can only be ran after the table has been created.
+                click_checkbox( i, false );
+            }
+        }
+
+        const search_form = document.getElementById("search_form");
+        search_form.addEventListener("submit", async (event) => {
+            event.preventDefault(); // Prevent default form submission
+            const input_data = {
+                text_input: document.getElementById('text_input').value
+            };
+
+            try {
+                const response = await fetch('/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify( input_data )
+                });
+
+                const data_from_client = await response.json();
+                id = data_from_client[0];
+                console.log( "one: " + data_from_client[1][0][0] );
+                console.log( "two: " + data_from_client[1][1][0] );
+                generate_videos_table( data_from_client[1][0], data_from_client[1][1] );
+            // Convert data into table
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+        });
+
+
+        const user_selection_form = document.getElementById("user_selection_form");
+        user_selection_form.addEventListener("submit", async (event) => {
+            console.log("function has been called")
+            event.preventDefault(); // Prevent default form submission
+
+            // Generate a list of videos with checkbox values
+            //var selected_videos = id + "";
+            var selected_videos = [];
+            for( let i = 0; i < video_count; i++ ) {
+                const current_checkbox = document.getElementById( CHECKBOX_INDEX_PREFIX + i);
+                is_video_chosen = current_checkbox.checked;
+                selected_videos = selected_videos.concat(is_video_chosen);
+            }
+
+            // Send the list to the server.
+            try {
+                const input_data = {
+                    user_selected_videos: [id, selected_videos]
+                };
+                const response = await fetch('/submit_users_selected_videos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify( input_data )
+                });
+
+                const data_from_client = await response.json();
+                download_file( data_from_client[0] );
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
+
