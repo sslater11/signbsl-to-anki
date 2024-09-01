@@ -76,7 +76,7 @@ You should have received a copy of the GNU General Public License along with thi
     <div class="center-all">
         <form id="search_form" method=POST">
             <input class="search-text" type="text" id="text_input" name="text_input" required>
-            <button class="search-text" type="submit" formaction="/submit">Find Signs</button>
+            <button class="search-text" type="submit" formaction="/submit" id="search_form_button">Find Signs</button>
         </form>
     </div>
     <br>
@@ -168,7 +168,6 @@ You should have received a copy of the GNU General Public License along with thi
             const INDEX_VIDEOS = 1;
             dict_of_is_checkbox_ticked = {};
 
-            document.getElementById( "create_anki_deck_button" ).disabled = false;
             document.getElementById( "div_user_selection" ).style.opacity = 1;
 
             // Remove any old tables from previous runs.
@@ -236,11 +235,20 @@ You should have received a copy of the GNU General Public License along with thi
                 click_checkbox( i, k, false );
             }
             }
+            
+            document.getElementById("search_form_button").disabled = false;
+            document.getElementById("search_form_button").textContent = "Find Signs";
+            document.getElementById("create_anki_deck_button").disabled = false;
         }
 
         const search_form = document.getElementById("search_form");
         search_form.addEventListener("submit", async (event) => {
             event.preventDefault(); // Prevent default form submission
+
+            document.getElementById("search_form_button").disabled = true;
+            document.getElementById("search_form_button").textContent = "Loading...";
+            document.getElementById("create_anki_deck_button").disabled = true;
+
             const input_data = {
                 text_input: document.getElementById('text_input').value
             };
