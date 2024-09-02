@@ -233,46 +233,46 @@ module.exports = {
 
         // Download all videos
         for( let i = 0; i < all_videos_and_words.length; i++ ) {
-        const word = all_videos_and_words[i];
-        number_of_videos = word.getVideoURLs().length;
+            const word = all_videos_and_words[i];
+            number_of_videos = word.getVideoURLs().length;
 
-        for( let k = 0; k < number_of_videos; k++ ) {
-            const url = word.getVideoURLs()[k];
+            for( let k = 0; k < number_of_videos; k++ ) {
+                const url = word.getVideoURLs()[k];
 
-            if( IS_SIMULATE_MODE ) {
-                file_path = "./media/" + fakeGenerateFilePathForWord( url , '');
-            } else {
-                file_extension = path.extname( url );
-                file_path = generateFilePathForWord( word.getWord(), file_extension );
-            }
-        
-            console.log("Downloading from " + url);
-            if( IS_SIMULATE_MODE ) {
-                fake_download( url, file_path);
-            } else {
-                download( url, file_path);
-            }
-        
-            console.log("Converting to webm...")
-            webm_file_path = path.parse(file_path).dir + "/" + path.parse(file_path).name + ".webm"
-            all_videos_and_words[i].setConvertedVideoFilePath( webm_file_path );
-
-            if( IS_SIMULATE_MODE ) {
-                console.log( "fake converting to webm for file " + file_path + " to " + webm_file_path );
-            } else {
-                ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" "' + webm_file_path + '"'
-                //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -filter_complex "[0:v] fps=15;" "' + webm_file_path + '"'
-                //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -vf scale=iw*1:ih*1 "' + gif_file_path + '"'
-        
-                try {
-                    command_ouput = execSync(ffmpeg_command, { encoding: 'utf-8' });
-                } catch (error) {
-                    console.error(`Error executing command: ${error.message}`);
+                if( IS_SIMULATE_MODE ) {
+                    file_path = "./media/" + fakeGenerateFilePathForWord( url , '');
+                } else {
+                    file_extension = path.extname( url );
+                    file_path = generateFilePathForWord( word.getWord(), file_extension );
                 }
-            }
         
-        anki_line = word.getWord() + "\t" + webm_file_path;
-        }
+                console.log("Downloading from " + url);
+                if( IS_SIMULATE_MODE ) {
+                    fake_download( url, file_path);
+                } else {
+                    download( url, file_path);
+                }
+        
+                console.log("Converting to webm...")
+                webm_file_path = path.parse(file_path).dir + "/" + path.parse(file_path).name + ".webm"
+                all_videos_and_words[i].setConvertedVideoFilePath( webm_file_path );
+
+                if( IS_SIMULATE_MODE ) {
+                    console.log( "fake converting to webm for file " + file_path + " to " + webm_file_path );
+                } else {
+                    ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" "' + webm_file_path + '"'
+                    //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -filter_complex "[0:v] fps=15;" "' + webm_file_path + '"'
+                    //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -vf scale=iw*1:ih*1 "' + gif_file_path + '"'
+        
+                    try {
+                        command_ouput = execSync(ffmpeg_command, { encoding: 'utf-8' });
+                    } catch (error) {
+                        console.error(`Error executing command: ${error.message}`);
+                    }
+                }
+        
+            anki_line = word.getWord() + "\t" + webm_file_path;
+            }
         }
 
 

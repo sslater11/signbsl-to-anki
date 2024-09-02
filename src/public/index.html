@@ -177,63 +177,63 @@ You should have received a copy of the GNU General Public License along with thi
             }
 
             for( let i = 0; i < all_words.length; i++ ) {
-            // Create a new table.
-            var table = document.createElement('TABLE');
-            var table_body = document.createElement('TBODY');
-            table.appendChild(table_body);
+                // Create a new table.
+                var table = document.createElement('TABLE');
+                var table_body = document.createElement('TBODY');
+                table.appendChild(table_body);
 
-            // Add all videos to the table.
-            const number_of_videos = all_words[i][INDEX_VIDEOS].length;
-            for (let k = 0; k < number_of_videos; k++) {
-                var tr = document.createElement('TR');
-                table_body.appendChild(tr);
+                // Add all videos to the table.
+                const number_of_videos = all_words[i][INDEX_VIDEOS].length;
+                for (let k = 0; k < number_of_videos; k++) {
+                    var tr = document.createElement('TR');
+                    table_body.appendChild(tr);
 
-                var td_1 = document.createElement('TD');
-                var td_2 = document.createElement('TD');
+                    var td_1 = document.createElement('TD');
+                    var td_2 = document.createElement('TD');
 
-                // Add video cell to table.
-                // Video HTML: var video_html = '" id="myvid_' + k + '" src="' + all_words[i][INDEX_VIDEOS][k] + '"loop="true" autoplay="autoplay" controlslist="nodownload" controls=""';
-                var video_element = document.createElement('video');
-                video_element.muted = true;
-                video_element.setAttribute( "id",           getCheckboxID( i, k ) );
-                video_element.setAttribute( "src",          all_words[i][INDEX_VIDEOS][k] );
-                video_element.setAttribute( "loop",         "true" );
-                video_element.setAttribute( "autoplay",     "true" );
-                video_element.setAttribute( "width",        "50%" );
-                video_element.setAttribute( "height",       "50%" );
-                //video_element.setAttribute( "controlslist", "nodownload" );
-                //video_element.setAttribute( "controls",     "" );
-                td_2.appendChild( video_element );
-                td_2.appendChild( document.createElement("br") );
-                td_2.appendChild( document.createTextNode( all_words[i][INDEX_WORD] ) );
+                    // Add video cell to table.
+                    // Video HTML: var video_html = '" id="myvid_' + k + '" src="' + all_words[i][INDEX_VIDEOS][k] + '"loop="true" autoplay="autoplay" controlslist="nodownload" controls=""';
+                    var video_element = document.createElement('video');
+                    video_element.muted = true;
+                    video_element.setAttribute( "id",           getCheckboxID( i, k ) );
+                    video_element.setAttribute( "src",          all_words[i][INDEX_VIDEOS][k] );
+                    video_element.setAttribute( "loop",         "true" );
+                    video_element.setAttribute( "autoplay",     "true" );
+                    video_element.setAttribute( "width",        "50%" );
+                    video_element.setAttribute( "height",       "50%" );
+                    //video_element.setAttribute( "controlslist", "nodownload" );
+                    //video_element.setAttribute( "controls",     "" );
+                    td_2.appendChild( video_element );
+                    td_2.appendChild( document.createElement("br") );
+                    td_2.appendChild( document.createTextNode( all_words[i][INDEX_WORD] ) );
 
 
-                // Add checkbox cell to table.
-                var checkbox_element = document.createElement("input");
-                checkbox_element.setAttribute( "type", "checkbox" );
-                checkbox_element.setAttribute( "id", getCheckboxID( i, k ) );
-                //checkbox_element.setAttribute( "onclick", "click_checkbox(" + i + ")" );
-                checkbox_element.setAttribute( "checked", "true" );
-                dict_of_is_checkbox_ticked[ getCheckboxID( i, k ) ] = true; // Used to keep track of checkbox value.
-                //dict_of_is_checkbox_ticked = dict_of_is_checkbox_ticked.concat( true ); // Used to keep track of checkbox value.
-                td_1.appendChild( document.createElement("br") );
-                td_1.appendChild( checkbox_element );
+                    // Add checkbox cell to table.
+                    var checkbox_element = document.createElement("input");
+                    checkbox_element.setAttribute( "type", "checkbox" );
+                    checkbox_element.setAttribute( "id", getCheckboxID( i, k ) );
+                    //checkbox_element.setAttribute( "onclick", "click_checkbox(" + i + ")" );
+                    checkbox_element.setAttribute( "checked", "true" );
+                    dict_of_is_checkbox_ticked[ getCheckboxID( i, k ) ] = true; // Used to keep track of checkbox value.
+                    //dict_of_is_checkbox_ticked = dict_of_is_checkbox_ticked.concat( true ); // Used to keep track of checkbox value.
+                    td_1.appendChild( document.createElement("br") );
+                    td_1.appendChild( checkbox_element );
 
-                tr.appendChild(td_1);
-                tr.appendChild(td_2);
+                    tr.appendChild(td_1);
+                    tr.appendChild(td_2);
 
-                tr.setAttribute( "id", getVideoID( i, k ) );
-                tr.setAttribute( "onclick", "click_checkbox(" + i + ", " + k + ", true )" );
-            }
+                    tr.setAttribute( "id", getVideoID( i, k ) );
+                    tr.setAttribute( "onclick", "click_checkbox(" + i + ", " + k + ", true )" );
+                }
 
-            // Add table to our div tag.
-            table_div.appendChild( table );
+                // Add table to our div tag.
+                table_div.appendChild( table );
 
-            // This will highlight rows of ticked videos :).
-            for (let k = 0; k < number_of_videos; k++) {
-                // Can only be ran after the table has been created.
-                click_checkbox( i, k, false );
-            }
+                // This will highlight rows of ticked videos :).
+                for (let k = 0; k < number_of_videos; k++) {
+                    // Can only be ran after the table has been created.
+                    click_checkbox( i, k, false );
+                }
             }
             
             document.getElementById("search_form_button").disabled = false;
