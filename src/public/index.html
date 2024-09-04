@@ -105,12 +105,19 @@ You should have received a copy of the GNU General Public License along with thi
         const VIDEO_INDEX_PREFIX     = "video_row_";
         const CHECKBOX_INDEX_PREFIX  = "video_checkbox_";
 
-        const COLOR_PASTEL_LIGHT_BLUE = "#b8e5ff";
-        const COLOR_PASTEL_PINK       = "#f4b9c9";
-        const COLOR_PASTEL_BLUE       = "#b9e3ea";
-        const COLOR_PASTEL_SALMON     = "#ffd9c8";
-        const COLOR_PASTEL_YELLOW     = "#ffffc1";
-        const COLOR_PASTEL_PURPLE     = "#d3b8d4";
+        const COLOR_PASTEL_GREEN      = "#7CFFAF";
+        const COLOR_PASTEL_LIGHT_BLUE = "#71CFE8";
+        const COLOR_PASTEL_BLUE       = "#8989FF";
+        const COLOR_PASTEL_PURPLE     = "#DA9BE8";
+        const COLOR_PASTEL_SALMON     = "#FFBFBC";
+
+        const ALL_COLORS = [
+            COLOR_PASTEL_GREEN,
+            COLOR_PASTEL_LIGHT_BLUE,
+            COLOR_PASTEL_BLUE,
+            COLOR_PASTEL_PURPLE,
+            COLOR_PASTEL_SALMON
+        ]; 
 
         //const COLOR_NOT_HIGHLIGHTED_RABLE_ROW = "#ebebeb";
         const COLOR_NOT_HIGHLIGHTED_RABLE_ROW = "#f0f0f0";
@@ -199,7 +206,8 @@ You should have received a copy of the GNU General Public License along with thi
             }
 
             getWordHighlightBackgroundColor( word_index ) {
-                return COLOR_HIGHLIGHTED_TABLE_ROW;
+                const color_index = word_index % ALL_COLORS.length;
+                return ALL_COLORS[ color_index ];
             }
 
             updateSingleRowHighlight( word_index, video_index ) {
