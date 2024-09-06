@@ -17,6 +17,11 @@ const crypto = require('crypto');
 
 const IS_SIMULATE_MODE = false;
 
+/**
+ * TODO:
+ * Move vidoes that are used to a folder for the media.
+ * Save all flashcards to a global deck.
+ */
 /* TODO:
     test whether filenames with quotes and brackets break this script and the genanki script.
     make this parse the string of words so that we can send a string like "cheese beef ham" and it will make flashcards for all 3 words.
@@ -27,15 +32,16 @@ class WordAndVideos {
     constructor( word, video ){
         this.word = word.toLowerCase();
         this.videos = [ video ];
-        this.converted_video_file_path = "";
+        this.converted_video_file_path = [];
     }
 
     addVideoURL( url ){
         this.videos = this.videos.concat( url );
+        this.converted_video_file_path = this.converted_video_file_path.concat( "" );
     }
 
     setConvertedVideoFilePath( k, converted_video_file_path ) {
-        this.converted_video_file_path = converted_video_file_path;
+        this.converted_video_file_path[ k ] = converted_video_file_path;
     }
 
     getWord() {
@@ -63,8 +69,12 @@ class WordAndVideos {
         return flashcard.toDBLine();
     }
 
-    toArray() {
-        return [[ this.word, this.videos ]];
+    toArrayWithConvertedVideoFile() {
+        if( this.videos.length != this.converted_video_file_path.length ) {
+            return null;
+        } else {
+            return [[ this.word, this.converted_video_file_path ]];
+        }
     }
 }
 
@@ -245,17 +255,17 @@ module.exports = {
                     file_extension = path.extname( url );
                     file_path = generateFilePathForWord( word.getWord(), file_extension );
                 }
-        
+
                 console.log("Downloading from " + url);
                 if( IS_SIMULATE_MODE ) {
                     fake_download( url, file_path);
                 } else {
                     download( url, file_path);
                 }
-        
+
                 console.log("Converting to webm...")
                 webm_file_path = path.parse(file_path).dir + "/" + path.parse(file_path).name + ".webm"
-                all_videos_and_words[i].setConvertedVideoFilePath( webm_file_path );
+                all_videos_and_words[i].setConvertedVideoFilePath( k, webm_file_path + "" );
 
                 if( IS_SIMULATE_MODE ) {
                     console.log( "fake converting to webm for file " + file_path + " to " + webm_file_path );
@@ -263,133 +273,85 @@ module.exports = {
                     ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" "' + webm_file_path + '"'
                     //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -filter_complex "[0:v] fps=15;" "' + webm_file_path + '"'
                     //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -vf scale=iw*1:ih*1 "' + gif_file_path + '"'
-        
+
                     try {
                         command_ouput = execSync(ffmpeg_command, { encoding: 'utf-8' });
                     } catch (error) {
                         console.error(`Error executing command: ${error.message}`);
                     }
                 }
-        
-            anki_line = word.getWord() + "\t" + webm_file_path;
+
             }
         }
 
-
-
-
-
-
-
-
-
-
-        // Create flashcard DB lines.
-        // Create a flashcard showing the sign language video as the front of the card. Text on back of card.
-        all_videos_for_reverse_card = []
-        //all_cards = []
-        //for( let i = 0; i < all_video_filepaths.length; i++ ) {
-        //    card = new Flashcard( word, Flashcard.CARD_MODEL_VIDEO_FRONT, [ all_video_filepaths[i]] )
-        //    all_cards = all_cards.concat( [card] )
-        //    all_videos_for_reverse_card = all_videos_for_reverse_card.concat ( [ word, all_video_filepaths[i] ] )
-        //}
-
-        reverse_card = new Flashcard( word, "signlanguagetext-front-card-model", all_videos_for_reverse_card )
-
-
-        // TODO: make card with all videos - only videos with the word that is the same as the one we chose.
-        // TODO: make card with all videos - make a way to say how many different versions there are so we can add it to the flashcard as bracets e.g. brown(2).
-
-
-        var all_db_card_lines = ""
+        var all_words = [];
         for( let i = 0; i < all_videos_and_words.length; i++ ) {
-            const word = all_videos_and_words[i];
-            const number_of_videos = word.getVideoURLs().length;
-            for( let k = 0; k < number_of_videos; k++ ) {
-                all_db_card_lines += word.toDBLine( k, Flashcard.CARD_MODEL_VIDEO_FRONT );
-            
-                if( ( i == ( all_videos_and_words.length ) ) & ( k == (word.getVideoURLs().length - 1) )) {
-                    all_db_card_lines += "";
-                } else {
-                    all_db_card_lines += "\n";
-                }
-            }
-        }
-        //all_db_card_lines += reverse_card.toDBLine() + "\n"
-
-        console.log( "all_db_card_lines" )
-        console.log( all_db_card_lines )
-        console.log( "----" )
-
-        try {
-            const flashcards_file_name = './new-flashcards-' + id + '.txt';
-
-            fs.appendFileSync( flashcards_file_name, all_db_card_lines )
-            console.log('Data successfully appended to file.');
-        } catch (err) {
-            console.error('Error appending to file:', err.message);
-        }
-
-        var all_words = []
-        for( let i = 0; i < all_videos_and_words.length; i++ ) {
-            all_words = all_words.concat( all_videos_and_words[i].toArray() );
+            all_words = all_words.concat( all_videos_and_words[i].toArrayWithConvertedVideoFile() );
         }
 
         return [ id, all_words ];
     },
 
 
-    make_flashcards : function ( id, chosen_videos ) {
-        // Load flashcard list from file using id passed new-flashcards-{id}.txt
-        const flashcards_file_name = './new-flashcards-' + id + '.txt';
-        var anki_deck_file_name = "./decks/signbsl-anki-deck-" + id + ".apkg"
-        fs.readFile( flashcards_file_name, 'utf8', ( error, data ) => {
-            if( error ) {
-                console.log("ah shit, error opening file: " + flashcards_file_name );
-                return;
-            }
+    make_flashcards : function ( id, all_words_and_videos ) {
+        // Make a new database from the data passed.
+        const INDEX_WORD      = 0;
+        const INDEX_VIDEO     = 1;
+        const INDEX_IS_CHOSEN = 2;
+        const anki_deck_file_name = "./decks/signbsl-anki-deck-" + id + ".apkg";
 
-            const all_lines = data.toString().split("\n");
-            if( chosen_videos.length != all_lines.length ) {
-                console.log( "error in make_flashcards()" );
-                return;
-            }
+        // Make a list of all the db lines from the list the user sent over.
+        all_db_lines = "";
+        number_of_words = all_words_and_videos.length;
+        for( let i = 0; i < number_of_words; i++ ) {
+            const number_of_videos = all_words_and_videos[i][INDEX_VIDEO].length;
+            const word = all_words_and_videos[i][INDEX_WORD];
 
-            var all_flashcards = "";
-            // Loop through flashcards, extract the ones that were selected.
-            for( let i = 0; i < all_lines.length; i++ ) {
-                if( chosen_videos[i] ) {
-                    all_flashcards += all_lines[i];
-                    if( i < all_lines.length-1 ) {
-                        all_flashcards += "\n"
+            var all_videos_for_this_word = "";
+            for( let k = 0; k < number_of_videos; k++ ) {
+                const is_chosen = all_words_and_videos[i][INDEX_IS_CHOSEN][k];
+                if( is_chosen ) {
+                    // Convert to db line
+                    const video = all_words_and_videos[i][INDEX_VIDEO][k];
+                    
+                    if( k == 0 ){
+                        console.log("not adding a blank line");
+                        all_videos_for_this_word += video;
+                    } else {
+                        console.log("adding a blank line");
+                        all_videos_for_this_word += "," + video;
                     }
-                    console.log("Added flashcard to deck.");
-                } else {
-                    console.log("Not added flashcard to deck.");
+                    flashcard = new Flashcard( word, Flashcard.CARD_MODEL_VIDEO_FRONT, [ video ] );
+                    const db_line = word + Flashcard.DIVIDER + Flashcard.CARD_MODEL_VIDEO_FRONT + Flashcard.DIVIDER + video;
+                    all_db_lines += db_line + "\n";
                 }
             }
 
-            // Save user selected flashcards
-            var chosen_flashcards_filename = "./new-user-selected-flashcards-" + id + ".txt"
-            fs.writeFileSync( chosen_flashcards_filename, all_flashcards );
-
-            // Send new flashcard list to genanki
-
-            try {
-                console.log( "Creating Anki Deck: " + anki_deck_file_name )
-                command_output = execSync('./genanki_anki_flashcard_deck_creator.py "' + chosen_flashcards_filename + '"  "' + anki_deck_file_name + '"', { encoding: 'utf-8' });
-                console.log( "Successfully Created Anki Deck: " + anki_deck_file_name )
-            } catch (error) {
-                console.error(`Error executing GenAnki Script: ${error.message}`);
+            // Add a flashcard with all the videos for a single word.
+            const word_with_number_of_videos = word + "<br>(" + number_of_videos + ")"
+            const db_line = word_with_number_of_videos + Flashcard.DIVIDER + Flashcard.CARD_MODEL_TEXT_FRONT + Flashcard.DIVIDER + all_videos_for_this_word;
+            if( i == number_of_words -1 ) {
+                // Don't add a blank line at the end of the last line.
+                all_db_lines += db_line;
+            } else {
+                all_db_lines += db_line + "\n";
             }
-        });
+        }
 
+        // Save user selected flashcards
+        var chosen_flashcards_filename = "./new-user-selected-flashcards-" + id + ".txt"
+        fs.writeFileSync( chosen_flashcards_filename, all_db_lines);
+
+        // Send new flashcard list to genanki
+        try {
+            console.log( "Creating Anki Deck: " + anki_deck_file_name )
+            command_output = execSync('./genanki_anki_flashcard_deck_creator.py "' + chosen_flashcards_filename + '"  "' + anki_deck_file_name + '"', { encoding: 'utf-8' });
+            console.log( "Successfully Created Anki Deck: " + anki_deck_file_name )
+
+            // TODO: Make a bigger deck with every flashcard ever.
+        } catch (error) {
+            console.error(`Error executing GenAnki Script: ${error.message}`);
+        }
         return anki_deck_file_name.slice( 2 ); // slice(2) to remove the first 2 characters which in this case is a dot-slash in the filename ./file.apkg
-
-
-    // TODO: Figure out how reverse cards are stored
-
-    // Make a small deck with just these cards.
-    // Make a bigger deck with every flashcard ever.
     }
 };

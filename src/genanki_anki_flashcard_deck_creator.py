@@ -25,13 +25,16 @@ def help():
 # Text file DB layout
 # FRONT    MODEL_TYPE    MEDIA_FILE,OTHER_MEDIA_FILE,ETC
 class SignLanguageCard:
+    CARD_MODEL_VIDEO_FRONT = "signlanguage-video-front-card-model"
+    CARD_MODEL_TEXT_FRONT  = "signlanguage-text-front-card-model"
+
     def __init__(self, db_line):
         self.DIVIDER = "\t"
         self.MEDIA_DIVIDER = ","
         self.db_line = db_line
         all_elements = db_line.split( self.DIVIDER )
 
-        self.card_front       = all_elements[0]
+        self.card_word        = all_elements[0]
         self.card_model_type  = all_elements[1]
         self.card_media_files = all_elements[2]
         self.card_media_files = self.card_media_files.strip().split( self.MEDIA_DIVIDER )
@@ -39,7 +42,7 @@ class SignLanguageCard:
         print( self.card_media_files )
 
     def toDBLine( self ):
-        db_line = self.card_front + self.DIVIDER + self.card_model_type + self.DIVIDER
+        db_line = self.card_word + self.DIVIDER + self.card_model_type + self.DIVIDER
 
         # Convert media list to string
         # Check if it's a string or a list
@@ -70,96 +73,80 @@ class SignLanguageCard:
 
         return result
 
+    def getNumberOfVideos( self ):
+        return len( self.card_media_files )
+
+    def getCardModelType( self ):
+        return self.card_model_type
+
+    def isCardTypeVideoFront( self ):
+        if( self.card_model_type == self.CARD_MODEL_VIDEO_FRONT ):
+            return True
+        else:
+            return False
+
+    def isCardTypeWordFront( self ):
+        if( self.card_model_type == self.CARD_MODEL_TEXT_FRONT ):
+            return True
+        else:
+            return False
 
 
-#my_model = genanki.Model(
-#  1607491389,
-#  'Simple Model',
-#  fields=[
-#    {'name': 'Question'},
-#    {'name': 'Answer'},
-#  ],
-#  templates=[
-#    {
-#      'name': 'Card 1',
-#      'qfmt': '{{Question}}',
-#      'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
-#    },
-#  ])
+class MyBSLNote(genanki.Note):
+    @property
+    def guid(self):
+        # Generate a GUID using the video field in the note.
+        return genanki.guid_for( self.fields[ 2 ] )
 
+css = '''.card {
+    font-family: arial;
+    font-size: 34px;
+    text-align: center;
+    color: black;
+    background-color: white;
+}'''
 
-my_model = genanki.Model(
-    1607491389,
-    'Simple Model',
+my_video_model = genanki.Model(
+    9681166405,
+    'BSL Video Model',
     fields=[
-        {'name': 'Question'},
-        {'name': 'Answer'},
+        {'name': 'Word'},
+        {'name': 'Explanation'},
+        {'name': 'Video'},
     ],
     templates=[
-    {
-        'name': 'Card 1',
-        'qfmt': '{{Question}}',              # AND THIS
-        'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
-    },
-])
+        {
+            'name': 'Card Video',
+            'qfmt': '{{Video}}',
+            'afmt': '{{FrontSide}}<hr id="answer">{{Word}}<div><p>{{Explanation}}</p></div>',
+        },
+    ],
+    css=css
+)
 
-
-#cheese2 = "cheese-b1974.gif"
-cheese2 = "test123.jpg"
-video_filename = "Cheese-724816.webm"
-sign_language_video = '<video id="myvid1" src="' + video_filename + '" loop="true" autoplay="autoplay" controlslist="nodownload" controls=""></video>'
-
+my_word_model = genanki.Model(
+    4797280728,
+    'BSL Word Model',
+    fields=[
+        {'name': 'Word'},
+        {'name': 'Explanation'},
+        {'name': 'Video'},
+    ],
+    templates=[
+        {
+            'name': 'Card Word',
+            'qfmt': '{{Word}}',
+            'afmt': '{{FrontSide}}<hr id="answer">{{Video}}<div><p>{{Explanation}}</p></div>',
+        },
+    ],
+    css=css
+)
 
 
 my_deck = genanki.Deck(
-    2059403190,
-    'TESTING BSL POO DECK')
-
-
-### Test
-#video_html = '<video id="myvid1" src="' + "a-1234.webm" + '" loop="true" autoplay="autoplay" controlslist="nodownload" controls=""></video>'
-#my_note = genanki.Note(
-#    model=my_model,
-#    fields=["this is the one with ./ at the start of the path",video_html])
-##fields=["one","Cheese!<img src=\"" + cheese2 + "\">"])
-#
-#my_deck.add_note(my_note)
-#
-#
-#video_html = '<video id="myvid1" src="' + "a-1234.webm" + '" loop="true" autoplay="autoplay" controlslist="nodownload" controls=""></video>'
-#my_note = genanki.Note(
-#    model=my_model,
-#    fields=["this is the one without ./ at the start of the path",video_html])
-##fields=["one","Cheese!<img src=\"" + cheese2 + "\">"])
-#
-#my_deck.add_note(my_note)
-#
-#
-#
-#
-#video_html = '<video id="myvid1" src="' + "b-1234.webm" + '" loop="true" autoplay="autoplay" controlslist="nodownload" controls=""></video>'
-#my_note = genanki.Note(
-#    model=my_model,
-#    fields=["this is the one without ./ at the start of the path",video_html])
-##fields=["one","Cheese!<img src=\"" + cheese2 + "\">"])
-#
-#my_deck.add_note(my_note)
-#
-#
-## Save to anki deck.
-#my_package = genanki.Package( my_deck, media_files = [ "./a-1234.webm", "b-1234.webm" ] )
-#
-#my_package.write_to_file('output2.apkg')
-#
-#
-#
-#
-#
-#exit()
-
-
-
-
+    1193543062,
+    'SignBSL - Fuck Yeah!'
+)
 
 
 all_media_file_paths : list = []
@@ -183,20 +170,21 @@ db_file = open( passed_flashcards_file, "r" )
 for line in db_file:
     if line.strip() != "":
         card = SignLanguageCard( line )
-        print( "fffffffffffffffff" )
-        print(line )
-        print( card.getMediaAsHTML() )
-        print()
         # Create a note and add it to the deck
 
-        my_note = genanki.Note(
-            model = my_model,
-            fields = [ card.card_front, card.getMediaAsHTML() ]
+        current_model = None
+        if card.isCardTypeWordFront():
+            current_model = my_word_model
+        elif card.isCardTypeVideoFront():
+            current_model = my_video_model
+        else:
+            printf("ERROR: UNKNOWN CARD MODEL SET!")
+            exit( -100 )
+        my_note = MyBSLNote(
+            model = current_model,
+            fields = [ card.card_word, "", card.getMediaAsHTML() ]
         )
-        #fields=["one","Cheese!<img src=\"" + cheese2 + "\">"])
         my_deck.add_note( my_note )
-        print("new - note ")
-        print( my_note )
 
         # Add media file paths to one list, ignoring duplicates.
         for media_file in card.card_media_files:
@@ -206,7 +194,5 @@ for line in db_file:
 
 # Save to anki deck.
 my_package = genanki.Package(my_deck, media_files = all_media_file_paths )
-#my_package.media_files = [cheese2]
 
-#my_package.write_to_file('output2.apkg')
 my_package.write_to_file( output_flashcards_file )

@@ -85,7 +85,7 @@ You should have received a copy of the GNU General Public License along with thi
     <div class="center-all">
         <div id="div_user_selection">
             <form id="user_selection_form" method="POST">
-                <button type="submit" formaction="/submit_users_selected_videos" id="create_anki_deck_button" class="create-anki-deck-button" >BROOOOKEN! WONT WORK - Create Anki Deck</button>
+                <button type="submit" formaction="/submit_users_selected_videos" id="create_anki_deck_button" class="create-anki-deck-button" >Create Anki Deck</button>
             </form>
         </div>
 
@@ -363,18 +363,9 @@ You should have received a copy of the GNU General Public License along with thi
 
         const user_selection_form = document.getElementById("user_selection_form");
         user_selection_form.addEventListener("submit", async (event) => {
-            /*
-            
-            
-            broken, because we need to have every word saved in memory, then we access it to send to the server.
-            
-            
-            
-            */
             event.preventDefault(); // Prevent default form submission
 
             // Generate a list of videos with checkbox values
-            //var selected_videos = id + "";
             var selected_videos = all_words_and_videos.getAllSelectedWordsVideosAndID();
 
             // Send the list to the server.
