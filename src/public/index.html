@@ -257,15 +257,24 @@ You should have received a copy of the GNU General Public License along with thi
             all_words_and_videos.updateSingleRowHighlight( word_index, video_index );
         }
 
-        function generate_videos_table() {
+        function remove_all_tables() {
+            // Remove any old tables from previous runs.
+            var table_div = document.getElementById('div_table_for_videos');
+            if (typeof table_div !== 'undefined') {
+                while( table_div.firstChild ) {
+                    table_div.removeChild( table_div.firstChild );
+                }
+            }
+        }
 
+
+
+        function generate_videos_table() {
             document.getElementById( "div_user_selection" ).style.opacity = 1;
 
             // Remove any old tables from previous runs.
+            remove_all_tables();
             var table_div = document.getElementById('div_table_for_videos');
-            while( table_div.firstChild ) {
-                table_div.removeChild( table_div.firstChild );
-            }
 
             for( let i = 0; i < all_words_and_videos.getSizeOfWordsArray(); i++ ) {
                 // Create a new table.
@@ -334,9 +343,13 @@ You should have received a copy of the GNU General Public License along with thi
         search_form.addEventListener("submit", async (event) => {
             event.preventDefault(); // Prevent default form submission
 
+            document.getElementById("create_anki_deck_button").disabled = true;
             document.getElementById("search_form_button").disabled = true;
             document.getElementById("search_form_button").textContent = "Loading...";
-            document.getElementById("create_anki_deck_button").disabled = true;
+            document.getElementById( "div_user_selection" ).style.opacity = 0;
+
+            remove_all_tables();
+            var table_div = document.getElementById('div_table_for_videos');
 
             const input_data = {
                 text_input: document.getElementById('text_input').value
