@@ -88,8 +88,6 @@ You should have received a copy of the GNU General Public License along with thi
                 <button type="submit" formaction="/submit_users_selected_videos" id="create_anki_deck_button" class="create-anki-deck-button" >Create Anki Deck</button>
             </form>
         </div>
-
-
     </div>
     <div class="center-all">
         <div id="div_table_for_videos">
@@ -237,7 +235,7 @@ You should have received a copy of the GNU General Public License along with thi
         }
 
 
-        // code from Harvey Kadyanji @ https://stackoverflow.com/questions/36903527/how-do-you-automatically-download-a-file-in-javascript
+        // Code from Harvey Kadyanji @ https://stackoverflow.com/questions/36903527/how-do-you-automatically-download-a-file-in-javascript
         const download_file = (file) => {
             const element = document.createElement('a');
             element.setAttribute('href', file); // path to file on server.
@@ -337,6 +335,7 @@ You should have received a copy of the GNU General Public License along with thi
             document.getElementById("search_form_button").disabled = false;
             document.getElementById("search_form_button").textContent = "Find Signs";
             document.getElementById("create_anki_deck_button").disabled = false;
+            document.getElementById("text_input").disabled = false;
         }
 
         const search_form = document.getElementById("search_form");
@@ -346,6 +345,7 @@ You should have received a copy of the GNU General Public License along with thi
             document.getElementById("create_anki_deck_button").disabled = true;
             document.getElementById("search_form_button").disabled = true;
             document.getElementById("search_form_button").textContent = "Loading...";
+            document.getElementById("text_input").disabled = true;
             document.getElementById( "div_user_selection" ).style.opacity = 0;
 
             remove_all_tables();
@@ -395,7 +395,14 @@ You should have received a copy of the GNU General Public License along with thi
                 });
 
                 const data_from_server = await response.json();
-                download_file( data_from_server[0] );
+                if( data_from_server[0][0] == "Error: Word already exists in deck.") {
+                    console.log( "Error: Word already exists in deck." );
+                    console.log( "Doing nothing..." );
+                } else {
+                    console.log( data_from_server[0][0] );
+                    console.log( data_from_server[0][1] );
+                    download_file( data_from_server[0][0] );
+                }
             } catch (error) {
                 console.error('Error:', error);
             }

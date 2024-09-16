@@ -35,14 +35,15 @@ class SignLanguageCard:
         all_elements = db_line.split( self.DIVIDER )
 
         self.card_word        = all_elements[0]
-        self.card_model_type  = all_elements[1]
-        self.card_media_files = all_elements[2]
+        self.guid_key         = all_elements[1]
+        self.card_model_type  = all_elements[2]
+        self.card_media_files = all_elements[3]
         self.card_media_files = self.card_media_files.strip().split( self.MEDIA_DIVIDER )
         print("card_media_files")
         print( self.card_media_files )
 
     def toDBLine( self ):
-        db_line = self.card_word + self.DIVIDER + self.card_model_type + self.DIVIDER
+        db_line = self.card_word + self.DIVIDER + self.guid_key + self.DIVIDER + self.card_model_type + self.DIVIDER
 
         # Convert media list to string
         # Check if it's a string or a list
@@ -64,10 +65,10 @@ class SignLanguageCard:
             for i in range( len(self.card_media_files) ):
                 video_file = os.path.basename( self.card_media_files[i] )
                 video_html = '<video id="myvid1" src="' + video_file + '" loop="true" autoplay="autoplay" controlslist="nodownload" controls=""></video>'
-                result += video_html + "<br><br>"
+                result += video_html
                 if i < len(self.card_media_files) -1:
                     # Put a blank line after every line, except the last one.
-                    result += "<br><br>"
+                    result += "<br>"
         else:
             print( "Error, self.card_media_files was not a list" )
 
@@ -93,10 +94,30 @@ class SignLanguageCard:
 
 
 class MyBSLNote(genanki.Note):
+    def __init__(self, model=None, fields=None, sort_field=None, tags=None, guid=None, due=0, guid_key=None ):
+        super().__init__(model=model, fields=fields, sort_field=sort_field, tags=tags, guid=guid, due=due)
+        if( guid_key == None ):
+            print()
+            print("guid_key not passed.\nAborting flashcard deck creation...")
+            exit(-200)
+        else:
+            print("guidkey")
+            print(guid_key)
+            # Genanki seems to use the value _guid and guid, so assign both I guess.
+            self.guid  = MyBSLNote.guid_from_key( guid_key)
+            self._guid = MyBSLNote.guid_from_key( guid_key)
+            print( self.guid )
+
     @property
-    def guid(self):
-        # Generate a GUID using the video field in the note.
-        return genanki.guid_for( self.fields[ 2 ] )
+    def guid( self, new_guid ):
+        self.guid = new_guid
+        self._guid = new_guid
+    def guid( self ):
+        return self.guid
+
+    @staticmethod
+    def guid_from_key( guid_key ):
+        return genanki.guid_for( guid_key )
 
 css = '''.card {
     font-family: arial;
@@ -182,7 +203,8 @@ for line in db_file:
             exit( -100 )
         my_note = MyBSLNote(
             model = current_model,
-            fields = [ card.card_word, "", card.getMediaAsHTML() ]
+            fields = [ card.card_word, "", card.getMediaAsHTML() ],
+            guid_key = card.guid_key
         )
         my_deck.add_note( my_note )
 
