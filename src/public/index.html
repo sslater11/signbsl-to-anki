@@ -154,6 +154,10 @@ You should have received a copy of the GNU General Public License along with thi
                 return this.words_and_videos[ word_index ][ this.INDEX_VIDEO ][ video_index ];
             }
 
+            getVideoURL( word_index, video_index ) {
+                return "/cache/" + this.getVideo( word_index, video_index );
+            }
+
             getAllWordsAndVideos() {
                 return this.words_and_videos;
             }
@@ -294,7 +298,7 @@ You should have received a copy of the GNU General Public License along with thi
                     var video_element = document.createElement('video');
                     video_element.muted = true;
                     video_element.setAttribute( "id",           all_words_and_videos.getVideoElementID( i, k ) );
-                    video_element.setAttribute( "src",          all_words_and_videos.getVideo( i, k ) );
+                    video_element.setAttribute( "src",          all_words_and_videos.getVideoURL( i, k ) );
                     video_element.setAttribute( "loop",         "true" );
                     video_element.setAttribute( "autoplay",     "true" );
                     video_element.setAttribute( "width",        "50%" );

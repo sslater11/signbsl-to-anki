@@ -211,7 +211,7 @@ for line in db_file:
         # Add media file paths to one list, ignoring duplicates.
         for media_file in card.card_media_files:
             if media_file not in all_media_file_paths:
-                all_media_file_paths += [ media_file ]
+                all_media_file_paths += [ "./media/" + media_file ]
 
 
 # Save to anki deck.

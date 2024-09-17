@@ -33,16 +33,16 @@ class WordAndVideos {
     constructor( word, video ){
         this.word = word.toLowerCase();
         this.videos = [ video ];
-        this.converted_video_file_path = [];
+        this.converted_video_file_name = [];
     }
 
     addVideoURL( url ){
         this.videos = this.videos.concat( url );
-        this.converted_video_file_path = this.converted_video_file_path.concat( "" );
+        this.converted_video_file_name = this.converted_video_file_name.concat( "" );
     }
 
-    setConvertedVideoFilePath( k, converted_video_file_path ) {
-        this.converted_video_file_path[ k ] = converted_video_file_path;
+    setCovertedVideoFileName( k, converted_video_file_name ) {
+        this.converted_video_file_name[ k ] = converted_video_file_name;
     }
 
     getWord() {
@@ -71,10 +71,10 @@ class WordAndVideos {
     }
 
     toArrayWithConvertedVideoFile() {
-        if( this.videos.length != this.converted_video_file_path.length ) {
+        if( this.videos.length != this.converted_video_file_name.length ) {
             return null;
         } else {
-            return [[ this.word, this.converted_video_file_path ]];
+            return [[ this.word, this.converted_video_file_name ]];
         }
     }
 }
@@ -129,28 +129,32 @@ class Flashcard {
 }
 
 
-function generateFilePathForWord( video_title, file_extension ) {
+function generateFileNameForWord( video_title, file_extension ) {
     does_file_exist = true;
-    let path = ""
+    let filename = "";
 
     while( does_file_exist ) {
-        path = './media/signbsl-' + video_title.toLowerCase() + "-" + generateRandomString(6) + file_extension;
+        filename = 'signbsl-' + video_title.toLowerCase() + "-" + generateRandomString(6) + file_extension;
         try {
-            if (fs.existsSync(path)) {
+            if ( fs.existsSync( "./media/" + filename ) ) {
                 does_file_exist = true;
-            } else {
+            }
+            else if ( fs.existsSync( "./public/cache/" + filename ) ) {
+                does_file_exist = true;
+            }
+            else {
                 does_file_exist = false;
             }
-        } catch(err) {
-            console.error(err)
+        } catch( err ) {
+            console.error( err )
             does_file_exist = false;
         }
     }
 
-    return path;
+    return filename;
 }
 
-function fakeGenerateFilePathForWord( video_title, file_extension ) {
+function fakeGenerateFileNameForWord( video_title, file_extension ) {
     return video_title;
 }
 
@@ -203,7 +207,7 @@ function get_all_video_url_and_names( html_file ) {
             } else {
                 // Add the video and word to the list.
                 new_word = new WordAndVideos( word, video );
-                all_words  = all_words.concat( new_word );
+                all_words = all_words.concat( new_word );
             }
         }
     } catch (error) {
@@ -288,10 +292,10 @@ module.exports = {
                 const url = word.getVideoURLs()[k];
 
                 if( IS_SIMULATE_MODE ) {
-                    file_path = "./media/" + fakeGenerateFilePathForWord( url , '');
+                    file_path = "./public/cache/" + fakeGenerateFileNameForWord( url , '');
                 } else {
                     file_extension = path.extname( url );
-                    file_path = generateFilePathForWord( word.getWord(), file_extension );
+                    file_path = "./public/cache/" + generateFileNameForWord( word.getWord(), file_extension );
                 }
 
                 console.log("Downloading from " + url);
@@ -302,14 +306,15 @@ module.exports = {
                 }
 
                 console.log("Converting to webm...")
-                webm_file_path = path.parse(file_path).dir + "/" + path.parse(file_path).name + ".webm"
-                all_videos_and_words[i].setConvertedVideoFilePath( k, webm_file_path + "" );
+                //webm_file_path = path.parse(file_path).dir + "/" + path.parse(file_path).name + ".webm"
+                webm_file_name = path.parse(file_path).name + ".webm"
+                all_videos_and_words[i].setCovertedVideoFileName( k, webm_file_name + "" );
 
                 if( IS_SIMULATE_MODE ) {
-                    console.log( "fake converting to webm for file " + file_path + " to " + webm_file_path );
+                    console.log( "fake converting to webm for file " + file_path + " to " + webm_file_name );
                 } else {
-                    ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" "' + webm_file_path + '"'
-                    //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -filter_complex "[0:v] fps=15;" "' + webm_file_path + '"'
+                    ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" "./public/cache/' + webm_file_name + '"'
+                    //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -filter_complex "[0:v] fps=15;" "' + webm_file_name + '"'
                     //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -vf scale=iw*1:ih*1 "' + gif_file_path + '"'
 
                     try {
@@ -367,7 +372,6 @@ module.exports = {
                         console.log("adding a blank line");
                         all_videos_for_this_word += "," + video;
                     }
-                    flashcard = new Flashcard( word, Flashcard.CARD_MODEL_VIDEO_FRONT, [ video ] );
                     const guid_key = word + k;
                     const db_line = word + Flashcard.DIVIDER + guid_key + Flashcard.DIVIDER + Flashcard.CARD_MODEL_VIDEO_FRONT + Flashcard.DIVIDER + video;
                     new_db_lines += db_line + "\n";
@@ -400,16 +404,35 @@ module.exports = {
             }
         }
 
+        // Copy all video files from cache over to the media folder.
+        for( let i = 0; i < number_of_words; i++ ) {
+            const number_of_videos = all_words_and_videos[i][INDEX_VIDEO].length;
+            for( let k = 0; k < number_of_videos; k++ ) {
+                const is_chosen = all_words_and_videos[i][INDEX_IS_CHOSEN][k];
+                if( is_chosen ) {
+                    // Move the video file.
+                    const video = all_words_and_videos[i][INDEX_VIDEO][k];
+                    const cache_video_path = "./public/cache/" + video;
+                    const media_video_path = "./media/" + video;
+                    fs.copyFile(cache_video_path, media_video_path, (err) => {
+                        if (err) {
+                            console.error('Error copying file:', err);
+                            return [ "Error: copying files." ];
+                        }
+                    });
+                }
+            }
+        }
+
         // Add the new flashcards to the list.
         all_db_lines += new_db_lines;
 
         // Save user selected flashcards
-        var chosen_flashcards_filename = "./new-user-selected-flashcards-" + id + ".txt"
+        const chosen_flashcards_filename = "./decks/new-user-selected-flashcards-" + id + ".txt"
         fs.writeFileSync( chosen_flashcards_filename, new_db_lines);
 
-        const all_chosen_flashcards_filename = "./all-flashcards-" + id + ".txt";
+        const all_chosen_flashcards_filename = "./decks/all-flashcards-" + id + ".txt";
         fs.writeFileSync( all_chosen_flashcards_filename, all_db_lines);
-
 
         // Generate anki decks with genanki.
         try {
