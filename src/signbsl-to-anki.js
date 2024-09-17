@@ -241,7 +241,7 @@ function getAllDBFiles( subpath ) {
 
 function getAllDBLinesFromEveryDeck() {
     // Get list of files by their date
-    let all_db_files = getAllDBFiles("");
+    let all_db_files = getAllDBFiles("/decks/");
 
     let all_db_lines = "";
     // Multiple database files. Load every line from each of the db files.

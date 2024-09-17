@@ -64,6 +64,12 @@ You should have received a copy of the GNU General Public License along with thi
         font-size: 2rem;
         text-align: center;
     }
+
+    .download-buttons {
+        font-family:Arial, Helvetica, sans-serif;
+        font-size: 1rem;
+        text-align: center;
+    }
 </style>
 
 <body>
@@ -80,14 +86,22 @@ You should have received a copy of the GNU General Public License along with thi
         </form>
     </div>
     <br>
-    <br>
-    <br>
     <div class="center-all">
-        <div id="div_user_selection">
-            <form id="user_selection_form" method="POST">
+        <div id="div_create_anki_deck">
+            <form id="create_flashcards_form" method="POST">
                 <button type="submit" formaction="/submit_users_selected_videos" id="create_anki_deck_button" class="create-anki-deck-button" >Create Anki Deck</button>
             </form>
         </div>
+    </div>
+    <div class="center-all">
+        <div id="div_download_buttons">
+            <button type="button" id="download_deck_button" class="download-buttons" >Download this<br>small deck</button>
+            &nbsp; &nbsp;
+            <button type="button" id="download_complete_deck_button" class="download-buttons" >Download the<br>complete deck</button>
+        </div>
+    </div>
+    <div class="center-all">
+        <h2 id="table-heading">Select one video for each different sign.</h2>
     </div>
     <div class="center-all">
         <div id="div_table_for_videos">
@@ -124,8 +138,13 @@ You should have received a copy of the GNU General Public License along with thi
         var id = ""; // Used to make each search request unique.
         var all_words_and_videos;
 
+        document.getElementById( "download_deck_button" ).disabled = true;
+        document.getElementById( "download_complete_deck_button" ).disabled = true;
         document.getElementById( "create_anki_deck_button" ).disabled = true;
-        document.getElementById( "div_user_selection" ).style.opacity = 0;
+        document.getElementById( "div_create_anki_deck" ).style.opacity = 0;
+        document.getElementById( "div_download_buttons" ).style.opacity = 0;
+        document.getElementById( "table-heading" ).style.opacity = 0;
+
         // Put cursor focus on the text box when the page loads.
         window.onload = function() {
             document.getElementById("text_input").focus();
@@ -272,7 +291,8 @@ You should have received a copy of the GNU General Public License along with thi
 
 
         function generate_videos_table() {
-            document.getElementById( "div_user_selection" ).style.opacity = 1;
+            document.getElementById( "div_create_anki_deck" ).style.opacity = 1;
+            document.getElementById( "table-heading" ).style.opacity = 1;
 
             // Remove any old tables from previous runs.
             remove_all_tables();
@@ -336,6 +356,7 @@ You should have received a copy of the GNU General Public License along with thi
                 }
             }
             
+            document.getElementById( "table-heading" ).style.opacity = 1;
             document.getElementById("search_form_button").disabled = false;
             document.getElementById("search_form_button").textContent = "Find Signs";
             document.getElementById("create_anki_deck_button").disabled = false;
@@ -346,11 +367,16 @@ You should have received a copy of the GNU General Public License along with thi
         search_form.addEventListener("submit", async (event) => {
             event.preventDefault(); // Prevent default form submission
 
+            document.getElementById("search_form_button").textContent = "Loading...";
             document.getElementById("create_anki_deck_button").disabled = true;
             document.getElementById("search_form_button").disabled = true;
-            document.getElementById("search_form_button").textContent = "Loading...";
             document.getElementById("text_input").disabled = true;
-            document.getElementById( "div_user_selection" ).style.opacity = 0;
+            document.getElementById("download_deck_button").disabled = true;
+            document.getElementById("download_complete_deck_button").disabled = true;
+
+            document.getElementById("div_create_anki_deck").style.opacity = 0;
+            document.getElementById("div_download_buttons").style.opacity = 0;
+            document.getElementById("table-heading").style.opacity = 0;
 
             remove_all_tables();
             var table_div = document.getElementById('div_table_for_videos');
@@ -378,9 +404,15 @@ You should have received a copy of the GNU General Public License along with thi
         });
 
 
-        const user_selection_form = document.getElementById("user_selection_form");
-        user_selection_form.addEventListener("submit", async (event) => {
+        const create_flashcards_form = document.getElementById("create_flashcards_form");
+        create_flashcards_form.addEventListener("submit", async (event) => {
             event.preventDefault(); // Prevent default form submission
+            
+            var download_deck_button          = document.getElementById("download_deck_button");
+            var download_complete_deck_button = document.getElementById("download_complete_deck_button");
+
+            download_deck_button.disabled = true;
+            download_complete_deck_button.disabled = true;
 
             // Generate a list of videos with checkbox values
             var selected_videos = all_words_and_videos.getAllSelectedWordsVideosAndID();
@@ -403,13 +435,16 @@ You should have received a copy of the GNU General Public License along with thi
                     console.log( "Error: Word already exists in deck." );
                     console.log( "Doing nothing..." );
                 } else {
-                    console.log( data_from_server[0][0] );
-                    console.log( data_from_server[0][1] );
-                    download_file( data_from_server[0][0] );
+                    download_deck_button.setAttribute(          "onclick", "download_file( \"" + data_from_server[0][0] + "\" )" );
+                    download_complete_deck_button.setAttribute( "onclick", "download_file( \"" + data_from_server[0][1] + "\" )" );
                 }
             } catch (error) {
                 console.error('Error:', error);
             }
+
+            document.getElementById( "div_download_buttons" ).style.opacity = 1;
+            download_deck_button.disabled = false;
+            download_complete_deck_button.disabled = false;
         });
     </script>
 </body>
