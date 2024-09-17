@@ -82,14 +82,14 @@ You should have received a copy of the GNU General Public License along with thi
     <div class="center-all">
         <form id="search_form" method=POST">
             <input class="search-text" type="text" id="text_input" name="text_input" required>
-            <button class="search-text" type="submit" formaction="/submit" id="search_form_button">Find Signs</button>
+            <button class="search-text" type="submit" formaction="/bsl/submit" id="search_form_button">Find Signs</button>
         </form>
     </div>
     <br>
     <div class="center-all">
         <div id="div_create_anki_deck">
             <form id="create_flashcards_form" method="POST">
-                <button type="submit" formaction="/submit_users_selected_videos" id="create_anki_deck_button" class="create-anki-deck-button" >Create Anki Deck</button>
+                <button type="submit" formaction="/bsl/submit_users_selected_videos" id="create_anki_deck_button" class="create-anki-deck-button" >Create Anki Deck</button>
             </form>
         </div>
     </div>
@@ -174,7 +174,7 @@ You should have received a copy of the GNU General Public License along with thi
             }
 
             getVideoURL( word_index, video_index ) {
-                return "/cache/" + this.getVideo( word_index, video_index );
+                return "/bsl/cache/" + this.getVideo( word_index, video_index );
             }
 
             getAllWordsAndVideos() {
@@ -386,7 +386,7 @@ You should have received a copy of the GNU General Public License along with thi
             };
 
             try {
-                const response = await fetch('/submit', {
+                const response = await fetch('/bsl/submit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -422,7 +422,7 @@ You should have received a copy of the GNU General Public License along with thi
                 const input_data = {
                     user_selected_videos: selected_videos
                 };
-                const response = await fetch('/submit_users_selected_videos', {
+                const response = await fetch('/bsl/submit_users_selected_videos', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

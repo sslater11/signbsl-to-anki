@@ -9,8 +9,10 @@ You should have received a copy of the GNU General Public License along with thi
 */
 
 const express = require('express');
+const https = require('https');
 const app = express();
 const path = require('path');
+const fs = require('fs');
 
 var signbsl = require("./signbsl-to-anki");
 
@@ -49,9 +51,15 @@ app.post('/submit_users_selected_videos', (req, res) => {
     res.json( [anki_deck_url] );
 });
 
-// Set the server to listen on port 3000
-const PORT = process.env.PORT || 3000;
+// Load SSL certificate and key
+const options = {
+    key: fs.readFileSync('privkey.pem'),
+    cert: fs.readFileSync('fullchain.pem')
+};
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Create HTTPS server
+const PORT = 8190
+https.createServer(options, app).listen(PORT, () => {
+    console.log(`Server is running on https://localhost:${PORT}/bsl/`);
 });
+

@@ -1,5 +1,3 @@
-The word 'chalk' only has one card. make it not create a flashcard with 'all cards' whilst there's only one card.
-
 remove checkbox button as ticking it doesn't work, it executes the code twice.
 
 Make a search history down the side of the screen to see previous words and whether they're in the deck or not.
