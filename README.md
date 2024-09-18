@@ -27,3 +27,26 @@ cd src; ./server-signbsl-to-anki.js
 * Open Anki or AnkiDroid.
 * File > Import on PC  -- or -- On Android, tap the three lines in top right > Import.
 
+
+# Nginx setup
+This server should be ran on the subpath /bsl. e.g. example.com/bsl/
+For data to be passed properly, we need to route each request to the proper place.
+Place this underneath the server_name line.
+I think the sub path location needs to go before the root path, so have the root location at the bottom of this section.
+```
+        location /bsl/decks {
+                proxy_pass https://localhost:8190/decks;
+        }
+
+        location /bsl/submit_users_selected_videos {
+                proxy_pass https://localhost:8190/submit_users_selected_videos;
+        }
+
+        location /bsl/submit {
+                proxy_pass https://localhost:8190/submit;
+        }
+
+        location /bsl {
+                proxy_pass https://localhost:8190/;
+        }
+```
