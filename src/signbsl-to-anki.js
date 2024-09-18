@@ -212,6 +212,7 @@ function get_all_video_url_and_names( html_file ) {
         }
     } catch (error) {
         console.error(`Error executing command: ${error.message}`);
+        return [ "Error", error.message ];
     }
 
     return all_words;
@@ -283,19 +284,27 @@ module.exports = {
             all_videos_and_words = get_all_video_url_and_names( html_path );
         }
 
+        if( all_videos_and_words[0] == "Error" ) {
+            return all_videos_and_words;
+        }
+
         // Download all videos
         for( let i = 0; i < all_videos_and_words.length; i++ ) {
-            const word = all_videos_and_words[i];
-            number_of_videos = word.getVideoURLs().length;
+            const word_and_videos = all_videos_and_words[i];
+            number_of_videos = word_and_videos.getVideoURLs().length;
 
             for( let k = 0; k < number_of_videos; k++ ) {
-                const url = word.getVideoURLs()[k];
+                const url = word_and_videos.getVideoURLs()[k];
 
                 if( IS_SIMULATE_MODE ) {
                     file_path = "./public/cache/" + fakeGenerateFileNameForWord( url , '');
                 } else {
-                    file_extension = path.extname( url );
-                    file_path = "./public/cache/" + generateFileNameForWord( word.getWord(), file_extension );
+                    if( url === undefined || url === null ) {
+                        return[ "Error", "No videos for " + word ];
+                    } else {
+                        file_extension = path.extname( url );
+                        file_path = "./public/cache/" + generateFileNameForWord( word_and_videos.getWord(), file_extension );
+                    }
                 }
 
                 console.log("Downloading from " + url);
@@ -321,6 +330,7 @@ module.exports = {
                         command_ouput = execSync(ffmpeg_command, { encoding: 'utf-8' });
                     } catch (error) {
                         console.error(`Error executing command: ${error.message}`);
+                        return[ "Error", "Failed to convert video." ];
                     }
                 }
             }
@@ -399,7 +409,7 @@ module.exports = {
                 const word = line.split( Flashcard.DIVIDER )[0];
                 if( word == all_words_and_videos[i][INDEX_WORD]) {
                     // Return an error to the user
-                    return [ "Error: Word already exists in deck.", word ];
+                    return [ "Error", "Word already exists in deck: " + word ];
                 }
             }
         }

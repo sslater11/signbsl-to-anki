@@ -77,7 +77,7 @@ You should have received a copy of the GNU General Public License along with thi
         <h1>SignBSL to Anki Flashcard Creator</h1>
     </div>
     <div class="center-all">
-        <p>Type a word you would like to make a flashcard for</p>
+        <p id="message_to_user"></p>
     </div>
     <div class="center-all">
         <form id="search_form" method=POST">
@@ -138,6 +138,7 @@ You should have received a copy of the GNU General Public License along with thi
         var id = ""; // Used to make each search request unique.
         var all_words_and_videos;
 
+        show_default_message();
         document.getElementById( "download_deck_button" ).disabled = true;
         document.getElementById( "download_complete_deck_button" ).disabled = true;
         document.getElementById( "create_anki_deck_button" ).disabled = true;
@@ -271,6 +272,20 @@ You should have received a copy of the GNU General Public License along with thi
             document.body.removeChild(element);
         }
 
+        function show_error_message( error_message ) {
+            let message_to_user = document.getElementById("message_to_user");
+            message_to_user.textContent = "ERROR: " + error_message;
+            message_to_user.style.color = "rgb( 255, 0, 0 )";
+            message_to_user.style.fontSize = "3rem";
+        }
+
+        function show_default_message( error_message ) {
+            let message_to_user = document.getElementById("message_to_user");
+            message_to_user.textContent = "Type a word you would like to make a flashcard for";
+            message_to_user.style.color = "rgb( 0, 0, 0 )";
+            message_to_user.style.fontSize = "1rem";
+        }
+
         function click_checkbox( word_index, video_index ) {
             const new_checkbox_value = ! all_words_and_videos.getCheckboxValue( word_index, video_index );
             all_words_and_videos.setCheckboxValue( word_index, video_index, new_checkbox_value );
@@ -366,6 +381,7 @@ You should have received a copy of the GNU General Public License along with thi
         const search_form = document.getElementById("search_form");
         search_form.addEventListener("submit", async (event) => {
             event.preventDefault(); // Prevent default form submission
+            show_default_message();
 
             document.getElementById("search_form_button").textContent = "Loading...";
             document.getElementById("create_anki_deck_button").disabled = true;
@@ -395,10 +411,15 @@ You should have received a copy of the GNU General Public License along with thi
                 });
 
                 const data_from_server = await response.json();
-                all_words_and_videos = new AllWordsAndVideos( data_from_server );
-                generate_videos_table( );
+                if( data_from_server[0].toLowerCase() == "error" ) {
+                    show_error_message( data_from_server[1] );
+                } else {
+                    all_words_and_videos = new AllWordsAndVideos( data_from_server );
+                    generate_videos_table();
+                }
             } catch (error) {
                 console.error('Error:', error);
+                show_error_message( error );
             }
 
         });
@@ -431,15 +452,19 @@ You should have received a copy of the GNU General Public License along with thi
                 });
 
                 const data_from_server = await response.json();
-                if( data_from_server[0][0] == "Error: Word already exists in deck.") {
-                    console.log( "Error: Word already exists in deck." );
-                    console.log( "Doing nothing..." );
+                if( data_from_server[0].toLowerCase() == "error" ) {
+                    show_error_message( data_from_server[1] );
+                    download_deck_button.setAttribute(          "onclick", "show_error_message( \"No deck to download.\" )" );
+                    download_complete_deck_button.setAttribute( "onclick", "show_error_message( \"No newly completed deck to download.\" )" );
                 } else {
-                    download_deck_button.setAttribute(          "onclick", "download_file( \"" + data_from_server[0][0] + "\" )" );
-                    download_complete_deck_button.setAttribute( "onclick", "download_file( \"" + data_from_server[0][1] + "\" )" );
+                    download_deck_button.setAttribute(          "onclick", "download_file( \"" + data_from_server[0] + "\" )" );
+                    download_complete_deck_button.setAttribute( "onclick", "download_file( \"" + data_from_server[1] + "\" )" );
                 }
             } catch (error) {
                 console.error('Error:', error);
+                show_error_message( error );
+                download_deck_button.setAttribute(          "onclick", "show_error_message( \"No deck to download.\" )" );
+                download_complete_deck_button.setAttribute( "onclick", "show_error_message( \"No newly completed deck to download.\" )" );
             }
 
             document.getElementById( "div_download_buttons" ).style.opacity = 1;

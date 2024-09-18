@@ -48,7 +48,7 @@ app.post('/submit_users_selected_videos', (req, res) => {
     anki_deck_url = signbsl.make_flashcards( id, chosen_videos );
 
     // Send the deck back to client.
-    res.json( [anki_deck_url] );
+    res.json( anki_deck_url );
 });
 
 // Load SSL certificate and key

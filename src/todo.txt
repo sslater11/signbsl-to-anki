@@ -6,3 +6,13 @@ Make a search history down the side of the screen to see previous words and whet
 allow phrases to be searched like "one week"
 
 delete cache files after x days.
+
+make it multithreaded so it downloads all videos at once and converts them.
+
+when another word's videos come up, download the webpage for it and count how many videos there are for it.
+
+
+change all variables to 'let' or 'const', get rid of 'var'.
+
+'cake' crashes the video_url_and_name.py
+
