@@ -368,18 +368,20 @@ module.exports = {
             const number_of_videos = all_words_and_videos[i][INDEX_VIDEO].length;
             const word = all_words_and_videos[i][INDEX_WORD];
 
-            var all_videos_for_this_word = "";
+            let all_videos_for_this_word = "";
+            let is_first_video_added = false;
+            let number_of_chosen_videos = 0;
             for( let k = 0; k < number_of_videos; k++ ) {
                 const is_chosen = all_words_and_videos[i][INDEX_IS_CHOSEN][k];
                 if( is_chosen ) {
+                    number_of_chosen_videos++;
                     // Convert to db line
                     const video = all_words_and_videos[i][INDEX_VIDEO][k];
                     
-                    if( k == 0 ){
-                        console.log("not adding a blank line");
+                    if( is_first_video_added == false ){
+                        is_first_video_added = true;
                         all_videos_for_this_word += video;
                     } else {
-                        console.log("adding a blank line");
                         all_videos_for_this_word += "," + video;
                     }
                     const guid_key = word + k;
@@ -388,11 +390,13 @@ module.exports = {
                 }
             }
 
-            // Add a flashcard with all the videos for a single word.
-            const word_with_number_of_videos = word + "<br>(" + number_of_videos + ")"
-            const guid_key = word + "_all_videos";
-            const db_line = word_with_number_of_videos + Flashcard.DIVIDER + guid_key + Flashcard.DIVIDER + Flashcard.CARD_MODEL_TEXT_FRONT + Flashcard.DIVIDER + all_videos_for_this_word;
-            new_db_lines += db_line + "\n";
+            if( number_of_chosen_videos > 0 ) {
+                // Add a flashcard with all the videos for a single word.
+                const word_with_number_of_videos = word + "<br>(" + number_of_chosen_videos + ")"
+                const guid_key = word + "_all_videos";
+                const db_line = word_with_number_of_videos + Flashcard.DIVIDER + guid_key + Flashcard.DIVIDER + Flashcard.CARD_MODEL_TEXT_FRONT + Flashcard.DIVIDER + all_videos_for_this_word;
+                new_db_lines += db_line + "\n";
+            }
         }
 
 

@@ -16,3 +16,6 @@ change all variables to 'let' or 'const', get rid of 'var'.
 
 'cake' crashes the video_url_and_name.py
 
+manage symbols in words - remove apostrophe and hyphens and question marks and
+possibly brackets
+
