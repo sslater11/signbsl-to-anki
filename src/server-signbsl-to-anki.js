@@ -51,6 +51,13 @@ app.post('/submit_users_selected_videos', (req, res) => {
     res.json( anki_deck_url );
 });
 
+app.post('/submit_get_last_generated_deck', (req, res) => {
+    let last_generated_deck = signbsl.get_last_generated_deck( "/decks/" );
+
+    // Send the deck back to client.
+    res.json( last_generated_deck );
+});
+
 // Load SSL certificate and key
 const options = {
     key: fs.readFileSync('privkey.pem'),

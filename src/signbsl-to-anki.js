@@ -464,5 +464,28 @@ module.exports = {
         const path_to_complete_anki_deck = anki_deck_complete_file_name.slice( 2 ); // slice(2) to remove the first 2 characters which in this case is a dot-slash in the filename ./file.apkg
 
         return [path_to_anki_deck, path_to_complete_anki_deck ]
+    },
+
+    get_last_generated_deck : function ( subpath ) {
+        const app_directory_path = path.dirname(process.mainModule.filename); // Absolute path to our app directory
+        let files = fs.readdirSync( app_directory_path + subpath );
+        let files_with_stats = [];
+    
+        files.forEach( file => {
+            let stats = fs.statSync( app_directory_path + subpath + '/' + file );
+            files_with_stats.push( { filename: file, date: new Date( stats.ctime ), path: app_directory_path + subpath + '/' + file } );
+        } );
+    
+        // Sort files by date. Newest date last, so the database lines will be in order.
+        files_with_stats.sort( (a, b) => a.date - b.date );
+    
+        for( let i = files_with_stats.length-1; i >=0; i++ ) {
+            let filename = files_with_stats[i]["filename"];
+            if( filename.match("signbsl-anki-deck-complete-") != null ) {
+                return subpath.slice(1) + filename; // Slice to remove the forward slash from the beginning of /decks/ subpath
+            }
+        }
+
+        return null;
     }
 };

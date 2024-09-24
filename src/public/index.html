@@ -32,9 +32,9 @@ You should have received a copy of the GNU General Public License along with thi
     }
 
     td {
-        padding:2rem;
+        padding:1rem;
         font-family:Arial, Helvetica, sans-serif;
-        font-size: 3rem;
+        font-size: 1rem;
         text-align: center;
         padding-left:  1rem;
         padding-right: 1rem;
@@ -77,6 +77,9 @@ You should have received a copy of the GNU General Public License along with thi
         <h1>SignBSL to Anki Flashcard Creator</h1>
     </div>
     <div class="center-all">
+        <button type="button" id="download_last_generated_deck_button" class="download-buttons" >Download the<br>most recently generated deck</button>
+    </div>
+    <div class="center-all">
         <p id="message_to_user"></p>
     </div>
     <div class="center-all">
@@ -114,6 +117,33 @@ You should have received a copy of the GNU General Public License along with thi
                 hopefully this script will just do nothing.
                 make it return a 'signbsl server connection error' 
         */
+        const get_last_generated_deck = async (event) => {
+            try {
+                const input_data = {
+                    user_selected_videos: [1,2,3]
+                };
+                const response = await fetch('/bsl/submit_get_last_generated_deck', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(input_data),
+                });
+
+                const result = await response.json();
+                console.log( result );
+                const last_generated_deck_button = document.getElementById("download_last_generated_deck_button");
+                if( result === null | result === undefined ) {
+                    last_generated_deck_button.disabled = true;
+                    last_generated_deck_button.textContent = "No decks to download.";
+                } else {
+                    download_file( result );
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                show_error_message( error );
+            }
+        }
         const VIDEO_INDEX_PREFIX     = "video_row_";
         const CHECKBOX_INDEX_PREFIX  = "video_checkbox_";
 
@@ -150,6 +180,9 @@ You should have received a copy of the GNU General Public License along with thi
         window.onload = function() {
             document.getElementById("text_input").focus();
         };
+
+        const last_generated_deck_button = document.getElementById("download_last_generated_deck_button");
+        last_generated_deck_button.setAttribute("onclick", "get_last_generated_deck ()");
 
 
         class AllWordsAndVideos {
@@ -262,8 +295,8 @@ You should have received a copy of the GNU General Public License along with thi
         // Code from Harvey Kadyanji @ https://stackoverflow.com/questions/36903527/how-do-you-automatically-download-a-file-in-javascript
         const download_file = (file) => {
             const element = document.createElement('a');
-            element.setAttribute('href', file); // path to file on server.
-            element.setAttribute('download', file.slice(6)); // slice the /decks/ off the start of the string. // This is for the filename on the download.
+            element.setAttribute('href', "bsl/" + file); // path to file on server.
+            element.setAttribute('download', file.slice(6)); // slice the /decks/ off the start of the string. // This is for the filename of the download.
 
             element.style.display = 'none';
 
@@ -336,8 +369,8 @@ You should have received a copy of the GNU General Public License along with thi
                     video_element.setAttribute( "src",          all_words_and_videos.getVideoURL( i, k ) );
                     video_element.setAttribute( "loop",         "true" );
                     video_element.setAttribute( "autoplay",     "true" );
-                    video_element.setAttribute( "width",        "50%" );
-                    video_element.setAttribute( "height",       "50%" );
+                    video_element.setAttribute( "width",        "100%" );
+                    video_element.setAttribute( "height",       "100%" );
                     //video_element.setAttribute( "controlslist", "nodownload" );
                     //video_element.setAttribute( "controls",     "" );
                     td_2.appendChild( video_element );
@@ -455,7 +488,7 @@ You should have received a copy of the GNU General Public License along with thi
                 if( data_from_server[0].toLowerCase() == "error" ) {
                     show_error_message( data_from_server[1] );
                     download_deck_button.setAttribute(          "onclick", "show_error_message( \"No deck to download.\" )" );
-                    download_complete_deck_button.setAttribute( "onclick", "show_error_message( \"No newly completed deck to download.\" )" );
+                    download_complete_deck_button.setAttribute( "onclick", "show_error_message( \"No newly generated deck to download.\" )" );
                 } else {
                     download_deck_button.setAttribute(          "onclick", "download_file( \"" + data_from_server[0] + "\" )" );
                     download_complete_deck_button.setAttribute( "onclick", "download_file( \"" + data_from_server[1] + "\" )" );
@@ -464,7 +497,7 @@ You should have received a copy of the GNU General Public License along with thi
                 console.error('Error:', error);
                 show_error_message( error );
                 download_deck_button.setAttribute(          "onclick", "show_error_message( \"No deck to download.\" )" );
-                download_complete_deck_button.setAttribute( "onclick", "show_error_message( \"No newly completed deck to download.\" )" );
+                download_complete_deck_button.setAttribute( "onclick", "show_error_message( \"No newly generated deck to download.\" )" );
             }
 
             document.getElementById( "div_download_buttons" ).style.opacity = 1;
