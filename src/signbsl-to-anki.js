@@ -479,7 +479,7 @@ module.exports = {
         // Sort files by date. Newest date last, so the database lines will be in order.
         files_with_stats.sort( (a, b) => a.date - b.date );
     
-        for( let i = files_with_stats.length-1; i >=0; i++ ) {
+        for( let i = files_with_stats.length-1; i >=0; i-- ) {
             let filename = files_with_stats[i]["filename"];
             if( filename.match("signbsl-anki-deck-complete-") != null ) {
                 return subpath.slice(1) + filename; // Slice to remove the forward slash from the beginning of /decks/ subpath
