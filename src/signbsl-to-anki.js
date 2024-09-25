@@ -109,16 +109,22 @@ class Flashcard {
     }
 
     static fromDBLine( db_line ) {
-        const word            = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_WORD ];
-        const guid_key        = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_GUID_KEY ];
-        const card_model_type = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_CARD_MODEL_TYPE ];
-        let   media_files     = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_MEDIA_FILES ];
-        media_files = media_files.split( Flashcard.MEDIA_DIVIDER );
-        if( (typeof media_files) == "string" ){
-            media_files = [ media_files ];
+        try {
+            const word            = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_WORD ];
+            const guid_key        = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_GUID_KEY ];
+            const card_model_type = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_CARD_MODEL_TYPE ];
+            let   media_files     = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_MEDIA_FILES ];
+            media_files = media_files.split( Flashcard.MEDIA_DIVIDER );
+
+            if( (typeof media_files) == "string" ){
+                media_files = [ media_files ];
+            }
+
+            const flashcard = new Flashcard( word, guid_key, card_model_type,[ media_files ]);
+            return flashcard;
+        } catch {
+            return null;
         }
-        const flashcard = new Flashcard( word, guid_key, card_model_type,[ media_files ]);
-        return flashcard;
     }
 }
 
@@ -255,6 +261,7 @@ function getAllDBLinesFromEveryDeck() {
 // Main execution start. \\
 //-----------------------\\
 module.exports = {
+    Flashcard,
     scrape_signbsl : function ( words ) {
         let id = generateRandomString(8);
         let word = words[0];
@@ -462,7 +469,7 @@ module.exports = {
         return [path_to_anki_deck, path_to_complete_anki_deck ]
     },
 
-    get_last_generated_deck : function ( subpath ) {
+    get_last_generated_deck : function ( subpath, as_text_file = false ) {
         const app_directory_path = path.dirname(process.mainModule.filename); // Absolute path to our app directory
         let files = fs.readdirSync( app_directory_path + subpath );
         let files_with_stats = [];
@@ -477,7 +484,14 @@ module.exports = {
     
         for( let i = files_with_stats.length-1; i >=0; i-- ) {
             let filename = files_with_stats[i]["filename"];
-            if( filename.match("signbsl-anki-deck-complete-") != null ) {
+            let filename_to_match = "";
+            if( as_text_file ) {
+                filename_to_match = "all-flashcards-";
+            } else {
+                filename_to_match = "signbsl-anki-deck-complete-";
+            }
+
+            if( filename.match( filename_to_match ) != null ) {
                 return subpath.slice(1) + filename; // Slice to remove the forward slash from the beginning of /decks/ subpath
             }
         }

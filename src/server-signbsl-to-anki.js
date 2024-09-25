@@ -52,12 +52,36 @@ app.post('/submit_users_selected_videos', (req, res) => {
 });
 
 app.post('/submit_get_last_generated_deck', (req, res) => {
-    let last_generated_deck = signbsl.get_last_generated_deck( "/decks/" );
+    let last_generated_deck = signbsl.get_last_generated_deck( "/decks/", as_text_file = false );
 
     // Send the deck back to client.
     res.json( last_generated_deck );
 });
 
+app.post('/submit_get_word_count', (req, res) => {
+    var word_count = 0;
+    let last_generated_deck = signbsl.get_last_generated_deck( "/decks/", as_text_file = true );
+
+    if( last_generated_deck != null ) {
+        const all_db_lines = fs.readFileSync( last_generated_deck, 'UTF8' );
+        var previous_word = "";
+
+        for( const line of all_db_lines.split("\n") ) {
+            const flashcard = signbsl.Flashcard.fromDBLine( line );
+            if( flashcard != null ) {
+                // Make sure we don't count words with a "<br>" tag, because they are the ones with the video count.
+                if( ( flashcard.word.toLowerCase() != previous_word.toLowerCase() )  &  (flashcard.word.match("<br>") == null)  ) {
+                    word_count++;
+                    previous_word = flashcard.word;
+                }
+            }
+        }
+    }
+
+    console.log("Word count is: " + word_count );
+    // Send the deck back to client.
+    res.json( word_count );
+});
 // Load SSL certificate and key
 const options = {
     key: fs.readFileSync('privkey.pem'),

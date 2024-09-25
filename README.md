@@ -34,8 +34,17 @@ For data to be passed properly, we need to route each request to the proper plac
 Place this underneath the server_name line.
 I think the sub path location needs to go before the root path, so have the root location at the bottom of this section.
 ```
+        # Signbsl Server
         location /bsl/decks {
                 proxy_pass https://localhost:8190/decks;
+        }
+
+        location /bsl/submit_get_word_count {
+                proxy_pass https://localhost:8190/submit_get_word_count;
+        }
+
+        location /bsl/submit_get_last_generated_deck {
+                proxy_pass https://localhost:8190/submit_get_last_generated_deck;
         }
 
         location /bsl/submit_users_selected_videos {

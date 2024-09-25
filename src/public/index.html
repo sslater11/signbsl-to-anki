@@ -77,6 +77,9 @@ You should have received a copy of the GNU General Public License along with thi
         <h1>SignBSL to Anki Flashcard Creator</h1>
     </div>
     <div class="center-all">
+        <b><p id="word_counter"></p></b>
+    </div>
+    <div class="center-all">
         <button type="button" id="download_last_generated_deck_button" class="download-buttons" >Download the<br>most recently generated deck</button>
     </div>
     <div class="center-all">
@@ -143,7 +146,32 @@ You should have received a copy of the GNU General Public License along with thi
                 console.error('Error:', error);
                 show_error_message( error );
             }
-        }
+        };
+        const get_word_count = async (event) => {
+            try {
+                const input_data = {
+                    nonsense_data_to_pass: [1,2,3]
+                };
+                const response = await fetch('/bsl/submit_get_word_count', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(input_data),
+                });
+
+                const result = await response.json();
+                const word_counter       = document.getElementById("word_counter");
+                if( result === null | result === undefined ) {
+                    word_counter.textContent = "Unknown Word Count :(";
+                } else {
+                    word_counter.textContent = "Total word count: " + result;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                show_error_message( error );
+            }
+        };
         const VIDEO_INDEX_PREFIX     = "video_row_";
         const CHECKBOX_INDEX_PREFIX  = "video_checkbox_";
 
@@ -179,6 +207,7 @@ You should have received a copy of the GNU General Public License along with thi
         // Put cursor focus on the text box when the page loads.
         window.onload = function() {
             document.getElementById("text_input").focus();
+            get_word_count();
         };
 
         const last_generated_deck_button = document.getElementById("download_last_generated_deck_button");
@@ -503,6 +532,7 @@ You should have received a copy of the GNU General Public License along with thi
             document.getElementById( "div_download_buttons" ).style.opacity = 1;
             download_deck_button.disabled = false;
             download_complete_deck_button.disabled = false;
+            get_word_count();
         });
     </script>
 </body>
