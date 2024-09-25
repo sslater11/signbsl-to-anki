@@ -25,6 +25,23 @@ You should have received a copy of the GNU General Public License along with thi
         text-align: center;
     }
 
+    .counters_container {
+        display: flex;               /* Use flexbox for alignment */
+        flex-direction: column;      /* Stack items vertically */
+        align-items: center;         /* Center items horizontally */
+        justify-content: center;     /* Center items vertically (if needed) */
+        font-family:Arial, Helvetica, sans-serif;
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    .counters_item {
+        margin: 0.2rem 0;           /* Space between items */
+        text-align: center;         /* Center text inside the item */
+        font-family:Arial, Helvetica, sans-serif;
+        font-size: 1rem;
+    }
+
     table {
         border-spacing: 0;
         border-collapse: collapse;
@@ -76,8 +93,9 @@ You should have received a copy of the GNU General Public License along with thi
     <div class="center-all">
         <h1>SignBSL to Anki Flashcard Creator</h1>
     </div>
-    <div class="center-all">
-        <b><p id="word_counter"></p></b>
+    <div class="counters_container">                                                                                     
+        <b><p id="word_counter" class="counters_item"></p></b>                                                  
+        <b><p id="flashcard_counter" class="counters_item"></p></b>                               
     </div>
     <div class="center-all">
         <button type="button" id="download_last_generated_deck_button" class="download-buttons" >Download the<br>most recently generated deck</button>
@@ -86,7 +104,7 @@ You should have received a copy of the GNU General Public License along with thi
         <p id="message_to_user"></p>
     </div>
     <div class="center-all">
-        <form id="search_form" method=POST">
+        <form id="search_form" method="POST">
             <input class="search-text" type="text" id="text_input" name="text_input" required>
             <button class="search-text" type="submit" formaction="/bsl/submit" id="search_form_button">Find Signs</button>
         </form>
@@ -162,10 +180,13 @@ You should have received a copy of the GNU General Public License along with thi
 
                 const result = await response.json();
                 const word_counter       = document.getElementById("word_counter");
+                const flashcard_counter  = document.getElementById("flashcard_counter");
                 if( result === null | result === undefined ) {
-                    word_counter.textContent = "Unknown Word Count :(";
+                    word_counter.textContent      = "Unknown Word Count :(";
+                    flashcard_counter.textContent = "Unknown Flashcard Count :(";
                 } else {
-                    word_counter.textContent = "Total word count: " + result;
+                    word_counter.textContent      = "Total word count: "      + result[0];
+                    flashcard_counter.textContent = "Total flashcard count: " + result[1];
                 }
             } catch (error) {
                 console.error('Error:', error);

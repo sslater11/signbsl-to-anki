@@ -60,6 +60,7 @@ app.post('/submit_get_last_generated_deck', (req, res) => {
 
 app.post('/submit_get_word_count', (req, res) => {
     var word_count = 0;
+    var flashcard_count = 0;
     let last_generated_deck = signbsl.get_last_generated_deck( "/decks/", as_text_file = true );
 
     if( last_generated_deck != null ) {
@@ -69,6 +70,7 @@ app.post('/submit_get_word_count', (req, res) => {
         for( const line of all_db_lines.split("\n") ) {
             const flashcard = signbsl.Flashcard.fromDBLine( line );
             if( flashcard != null ) {
+                flashcard_count++;
                 // Make sure we don't count words with a "<br>" tag, because they are the ones with the video count.
                 if( ( flashcard.word.toLowerCase() != previous_word.toLowerCase() )  &  (flashcard.word.match("<br>") == null)  ) {
                     word_count++;
@@ -79,8 +81,9 @@ app.post('/submit_get_word_count', (req, res) => {
     }
 
     console.log("Word count is: " + word_count );
+    console.log("Flashcard count is: " + flashcard_count );
     // Send the deck back to client.
-    res.json( word_count );
+    res.json( [ word_count, flashcard_count ] );
 });
 // Load SSL certificate and key
 const options = {
