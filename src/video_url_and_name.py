@@ -15,12 +15,13 @@ html_contents = open( sys.argv[1] ,"r" )
 soup = BeautifulSoup(html_contents, 'html.parser')
 
 for video_div in soup.findAll('div', attrs={'itemprop':'video'}):
-    url = str( video_div.find('source').get("src") )
+    if (  ( video_div != None )  and  ( video_div.find('source') != None )  ):
+        url = str( video_div.find('source').get("src") )
 
-    word_text = "" + str(video_div.find('i'))
-    word_text = word_text.replace("<i>","")
-    word_text = word_text.replace("</i>","")
-    word_text = word_text.lower().strip()
+        word_text = "" + str(video_div.find('i'))
 
-    print( word_text + "\t" + url)
+        word_text = word_text.replace("<i>","")
+        word_text = word_text.replace("</i>","")
+        word_text = word_text.lower().strip()
 
+        print( word_text + "\t" + url)
