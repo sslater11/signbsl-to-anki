@@ -45,7 +45,7 @@ app.post('/submit_users_selected_videos', (req, res) => {
     const chosen_videos = user_selected_videos[1];
 
     // Make the deck.
-    anki_deck_url = signbsl.make_flashcards( id, chosen_videos );
+    const anki_deck_url = signbsl.make_flashcards( id, chosen_videos );
 
     // Send the deck back to client.
     res.json( anki_deck_url );

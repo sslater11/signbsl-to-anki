@@ -18,11 +18,6 @@ const { allowedNodeEnvironmentFlags } = require("process");
 
 const IS_SIMULATE_MODE = false;
 
-/**
- * TODO:
- * Move vidoes that are used to a folder for the media.
- * Save all flashcards to a global deck.
- */
 /* TODO:
     test whether filenames with quotes and brackets break this script and the genanki script.
     make this parse the string of words so that we can send a string like "cheese beef ham" and it will make flashcards for all 3 words.
@@ -97,10 +92,10 @@ class Flashcard {
     }
 
     toDBLine() {
-        var db_line = this.word + Flashcard.DIVIDER + this.guid_key + Flashcard.DIVIDER + this.card_model_type + Flashcard.DIVIDER;
+        let db_line = this.word + Flashcard.DIVIDER + this.guid_key + Flashcard.DIVIDER + this.card_model_type + Flashcard.DIVIDER;
 
         // Convert media list to string
-        var str_media_files = "";
+        let str_media_files = "";
         for( let i = 0; i < this.media_files.length; i++ ) {
             str_media_files += this.media_files[ i ];
             if( i < this.media_files.length -1) {
@@ -114,16 +109,15 @@ class Flashcard {
     }
 
     static fromDBLine( db_line ) {
-        const a = db_line.split( Flashcard.DIVIDER );
         const word            = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_WORD ];
         const guid_key        = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_GUID_KEY ];
         const card_model_type = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_CARD_MODEL_TYPE ];
-        var   media_files     = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_MEDIA_FILES ];
+        let   media_files     = db_line.split( Flashcard.DIVIDER )[ Flashcard.INDEX_MEDIA_FILES ];
         media_files = media_files.split( Flashcard.MEDIA_DIVIDER );
         if( (typeof media_files) == "string" ){
             media_files = [ media_files ];
         }
-        var flashcard = new Flashcard( word, guid_key, card_model_type,[ media_files ]);
+        const flashcard = new Flashcard( word, guid_key, card_model_type,[ media_files ]);
         return flashcard;
     }
 }
@@ -193,7 +187,7 @@ function get_all_video_url_and_names( html_file ) {
             const video = list_of_videos_and_words[i].split("\t")[1];
 
             // Does the word already exist in list?
-            var word_index = -1;
+            let word_index = -1;
             for( let k = 0; k < all_words.length; k++ ) {
                 if( all_words[k].isTheSameWord( word ) ) {
                     word_index = k;
@@ -242,7 +236,7 @@ function getAllDBFiles( subpath ) {
 
 function getAllDBLinesFromEveryDeck() {
     // Get list of files by their date
-    let all_db_files = getAllDBFiles("/decks/");
+    const all_db_files = getAllDBFiles("/decks/");
 
     let all_db_lines = "";
     // Multiple database files. Load every line from each of the db files.
@@ -262,11 +256,11 @@ function getAllDBLinesFromEveryDeck() {
 //-----------------------\\
 module.exports = {
     scrape_signbsl : function ( words ) {
-        var id = generateRandomString(8);
-        var word = words[0];
+        let id = generateRandomString(8);
+        let word = words[0];
         word = word.toLowerCase(); // make words match.
 
-        html_path = "./signbsl-html/" + word + "-signbsl.com.html";
+        const html_path = "./signbsl-html/" + word + "-signbsl.com.html";
         console.log("Getting html file.");
         
         if( IS_SIMULATE_MODE ) {
@@ -278,6 +272,7 @@ module.exports = {
         
         console.log();
         console.log("Extracting words and videos.");
+        let all_videos_and_words = null;
         if( IS_SIMULATE_MODE ) {
             all_videos_and_words = fake_get_all_video_url_and_names( html_path );
         } else {
@@ -291,10 +286,11 @@ module.exports = {
         // Download all videos
         for( let i = 0; i < all_videos_and_words.length; i++ ) {
             const word_and_videos = all_videos_and_words[i];
-            number_of_videos = word_and_videos.getVideoURLs().length;
+            const number_of_videos = word_and_videos.getVideoURLs().length;
 
             for( let k = 0; k < number_of_videos; k++ ) {
                 const url = word_and_videos.getVideoURLs()[k];
+                let file_path = "";
 
                 if( IS_SIMULATE_MODE ) {
                     file_path = "./public/cache/" + fakeGenerateFileNameForWord( url , '');
@@ -302,7 +298,7 @@ module.exports = {
                     if( url === undefined || url === null ) {
                         return[ "Error", "No videos for " + word ];
                     } else {
-                        file_extension = path.extname( url );
+                        const file_extension = path.extname( url );
                         file_path = "./public/cache/" + generateFileNameForWord( word_and_videos.getWord(), file_extension );
                     }
                 }
@@ -316,8 +312,8 @@ module.exports = {
 
                 console.log("Converting to webm...")
                 //webm_file_path = path.parse(file_path).dir + "/" + path.parse(file_path).name + ".webm"
-                webm_file_name = path.parse(file_path).name + ".webm"
-                all_videos_and_words[i].setCovertedVideoFileName( k, webm_file_name + "" );
+                const webm_file_name = path.parse(file_path).name + ".webm"
+                all_videos_and_words[i].setCovertedVideoFileName( k, webm_file_name );
 
                 if( IS_SIMULATE_MODE ) {
                     console.log( "fake converting to webm for file " + file_path + " to " + webm_file_name );
@@ -327,7 +323,7 @@ module.exports = {
                     //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -vf scale=iw*1:ih*1 "' + gif_file_path + '"'
 
                     try {
-                        command_ouput = execSync(ffmpeg_command, { encoding: 'utf-8' });
+                        let command_ouput = execSync(ffmpeg_command, { encoding: 'utf-8' });
                     } catch (error) {
                         console.error(`Error executing command: ${error.message}`);
                         return[ "Error", "Failed to convert video." ];
@@ -336,7 +332,7 @@ module.exports = {
             }
         }
 
-        var all_words = [];
+        let all_words = [];
         for( let i = 0; i < all_videos_and_words.length; i++ ) {
             all_words = all_words.concat( all_videos_and_words[i].toArrayWithConvertedVideoFile() );
         }
