@@ -51,7 +51,7 @@ You should have received a copy of the GNU General Public License along with thi
     td {
         padding:1rem;
         font-family:Arial, Helvetica, sans-serif;
-        font-size: 1rem;
+        font-size: 2rem;
         text-align: center;
         padding-left:  1rem;
         padding-right: 1rem;
@@ -242,7 +242,7 @@ You should have received a copy of the GNU General Public License along with thi
         class AllWordsAndVideos {
             INDEX_WORD  = 0;
             INDEX_VIDEO = 1;
-            default_checkbox_value = true;
+            DEFAULT_CHECKBOX_VALUE = true;
 
             /*
              * Receives an array that looks like this:
@@ -251,6 +251,18 @@ You should have received a copy of the GNU General Public License along with thi
             constructor( all_words_and_videos ) {
                 this.id = all_words_and_videos[0];
                 this.words_and_videos = all_words_and_videos[1];
+                this.checkboxes = [];
+
+                // Create checkboxes for each video for each word.
+                for( let i = 0; i < this.words_and_videos.length; i++ ) {
+                    let checkboxes_for_this_word = [];
+                    const number_of_videos = this.words_and_videos[i][this.INDEX_VIDEO].length;
+                    for( let k = 0; k < this.getSizeOfVideoArrayForWord(i); k++ ) {
+                        checkboxes_for_this_word = checkboxes_for_this_word.concat( this.DEFAULT_CHECKBOX_VALUE );
+                    }
+
+                    this.checkboxes = this.checkboxes.concat( [ checkboxes_for_this_word ] );
+                }
             }
 
             getWord( word_index ) {
@@ -283,16 +295,10 @@ You should have received a copy of the GNU General Public License along with thi
              */
             getAllSelectedWordsVideosAndID() {
                 var user_selection = this.words_and_videos;
-                for( let i = 0; i < this.words_and_videos.length; i++ ) {
-                    var selected_videos = [];
-                    for( let k = 0; k < this.getSizeOfVideoArrayForWord( i ); k++ ) {
-                        const checkbox_id = this.getCheckboxElementID( i, k );
-                        const current_checkbox = document.getElementById( checkbox_id );
-                        
-                        selected_videos = selected_videos.concat( [ current_checkbox.checked ] );
-                    }
 
-                    user_selection[i] = user_selection[i].concat( [ selected_videos ] );
+                // Add all the checkboxes to the list of all words and videos.
+                for( let i = 0; i < this.words_and_videos.length; i++ ) {
+                    user_selection[i] = user_selection[i].concat( [ this.checkboxes[i] ] );
                 }
 
                 return [ this.id, user_selection ];
@@ -307,15 +313,11 @@ You should have received a copy of the GNU General Public License along with thi
             }
 
             getCheckboxValue( word_index, video_index ) {
-                const checkbox_id = this.getCheckboxElementID( word_index, video_index );
-                const current_checkbox = document.getElementById( checkbox_id );
-                return current_checkbox.checked;
+                return this.checkboxes[ word_index ][ video_index ];
             }
 
             setCheckboxValue( word_index, video_index, is_ticked ) {
-                const checkbox_id = this.getCheckboxElementID( word_index, video_index );
-                const current_checkbox = document.getElementById( checkbox_id );
-                current_checkbox.checked = is_ticked;
+                this.checkboxes[ word_index ][ video_index ] = is_ticked;
             }
 
             getWordHighlightBackgroundColor( word_index ) {
@@ -324,10 +326,8 @@ You should have received a copy of the GNU General Public License along with thi
             }
 
             updateSingleRowHighlight( word_index, video_index ) {
-                const checkbox_id = this.getCheckboxElementID( word_index, video_index );
-                const current_checkbox = document.getElementById( checkbox_id );
                 var row = document.getElementById( this.getVideoElementID( word_index, video_index ) );
-                if( current_checkbox.checked ) {
+                if( this.checkboxes[word_index][video_index] ) {
                     // Highlight
                     row.setAttribute( "bgColor", this.getWordHighlightBackgroundColor( word_index ) );
                 } else {
@@ -392,7 +392,6 @@ You should have received a copy of the GNU General Public License along with thi
         function click_checkbox( word_index, video_index ) {
             const new_checkbox_value = ! all_words_and_videos.getCheckboxValue( word_index, video_index );
             all_words_and_videos.setCheckboxValue( word_index, video_index, new_checkbox_value );
-            
             all_words_and_videos.updateSingleRowHighlight( word_index, video_index );
         }
 
@@ -429,7 +428,6 @@ You should have received a copy of the GNU General Public License along with thi
                     table_body.appendChild(tr);
 
                     var td_1 = document.createElement('TD');
-                    var td_2 = document.createElement('TD');
 
                     // Add video cell to table.
                     // Video HTML: var video_html = '" id="myvid_' + k + '" src="' + all_words_and_videos.getVideo( i, k ) + '"loop="true" autoplay="autoplay" controlslist="nodownload" controls=""';
@@ -443,21 +441,20 @@ You should have received a copy of the GNU General Public License along with thi
                     video_element.setAttribute( "height",       "100%" );
                     //video_element.setAttribute( "controlslist", "nodownload" );
                     //video_element.setAttribute( "controls",     "" );
-                    td_2.appendChild( video_element );
-                    td_2.appendChild( document.createElement("br") );
-                    td_2.appendChild( document.createTextNode( all_words_and_videos.getWord( i ) ) );
+                    td_1.appendChild( video_element );
+                    td_1.appendChild( document.createElement("br") );
+                    td_1.appendChild( document.createTextNode( all_words_and_videos.getWord( i ) ) );
 
 
                     // Add checkbox cell to table.
-                    var checkbox_element = document.createElement("input");
-                    checkbox_element.setAttribute( "type", "checkbox" );
-                    checkbox_element.setAttribute( "id", all_words_and_videos.getCheckboxElementID( i, k ) );
-                    checkbox_element.setAttribute( "checked", "true" );
-                    td_1.appendChild( document.createElement("br") );
-                    td_1.appendChild( checkbox_element );
+                    //var checkbox_element = document.createElement("input");
+                    //checkbox_element.setAttribute( "type", "checkbox" );
+                    //checkbox_element.setAttribute( "id", all_words_and_videos.getCheckboxElementID( i, k ) );
+                    //checkbox_element.setAttribute( "checked", "true" );
+                    //td_1.appendChild( document.createElement("br") );
+                    //td_1.appendChild( checkbox_element );
 
                     tr.appendChild(td_1);
-                    tr.appendChild(td_2);
 
                     tr.setAttribute( "id", all_words_and_videos.getVideoElementID( i, k ) );
                     tr.setAttribute( "onclick", "click_checkbox(" + i + ", " + k + " )" );

@@ -12,5 +12,7 @@ make it multithreaded so it downloads all videos at once and converts them.
 when another word's videos come up, download the webpage for it and count how many videos there are for it.
 
 
-manage symbols in words - remove apostrophe and hyphens and question marks and possibly brackets
+manage symbols in words - remove apostrophe and hyphens and question marks and possibly brackets and commas
+	The word 'small' crashes the server as it has a comma in the last video title "small , tiny"
+	The comma is then passed to the filename and well just run it and see it crash.
 
