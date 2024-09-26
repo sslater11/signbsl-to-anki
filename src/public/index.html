@@ -106,14 +106,14 @@ You should have received a copy of the GNU General Public License along with thi
     <div class="center-all">
         <form id="search_form" method="POST">
             <input class="search-text" type="text" id="text_input" name="text_input" required>
-            <button class="search-text" type="submit" formaction="/bsl/submit" id="search_form_button">Find Signs</button>
+            <button class="search-text" type="submit" id="search_form_button">Find Signs</button>
         </form>
     </div>
     <br>
     <div class="center-all">
         <div id="div_create_anki_deck">
             <form id="create_flashcards_form" method="POST">
-                <button type="submit" formaction="/bsl/submit_users_selected_videos" id="create_anki_deck_button" class="create-anki-deck-button" >Create Anki Deck</button>
+                <button type="submit" id="create_anki_deck_button" class="create-anki-deck-button" >Create Anki Deck</button>
             </form>
         </div>
     </div>
@@ -143,7 +143,7 @@ You should have received a copy of the GNU General Public License along with thi
                 const input_data = {
                     user_selected_videos: [1,2,3]
                 };
-                const response = await fetch('/bsl/submit_get_last_generated_deck', {
+                const response = await fetch( get_url_subpath() + '/submit_get_last_generated_deck', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -170,7 +170,7 @@ You should have received a copy of the GNU General Public License along with thi
                 const input_data = {
                     nonsense_data_to_pass: [1,2,3]
                 };
-                const response = await fetch('/bsl/submit_get_word_count', {
+                const response = await fetch( get_url_subpath() + '/submit_get_word_count', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -193,6 +193,7 @@ You should have received a copy of the GNU General Public License along with thi
                 show_error_message( error );
             }
         };
+
         const VIDEO_INDEX_PREFIX     = "video_row_";
         const CHECKBOX_INDEX_PREFIX  = "video_checkbox_";
 
@@ -224,6 +225,9 @@ You should have received a copy of the GNU General Public License along with thi
         document.getElementById( "div_create_anki_deck" ).style.opacity = 0;
         document.getElementById( "div_download_buttons" ).style.opacity = 0;
         document.getElementById( "table-heading" ).style.opacity = 0;
+
+        document.getElementById( "create_anki_deck_button" ).setAttribute("formaction", get_url_subpath() + "/submit_users_selected_videos");
+        document.getElementById( "search_form_button"      ).setAttribute("formaction", get_url_subpath() + "/submit");
 
         // Put cursor focus on the text box when the page loads.
         window.onload = function() {
@@ -258,7 +262,7 @@ You should have received a copy of the GNU General Public License along with thi
             }
 
             getVideoURL( word_index, video_index ) {
-                return "/bsl/cache/" + this.getVideo( word_index, video_index );
+                return  get_url_subpath() + "/cache/" + this.getVideo( word_index, video_index );
             }
 
             getAllWordsAndVideos() {
@@ -345,7 +349,8 @@ You should have received a copy of the GNU General Public License along with thi
         // Code from Harvey Kadyanji @ https://stackoverflow.com/questions/36903527/how-do-you-automatically-download-a-file-in-javascript
         const download_file = (file) => {
             const element = document.createElement('a');
-            element.setAttribute('href', "bsl/" + file); // path to file on server.
+            subpath = get_url_subpath().slice(1); // Remove '/' from the beginning.
+            element.setAttribute('href', subpath + "/" + file); // path to file on server.
             element.setAttribute('download', file.slice(6)); // slice the /decks/ off the start of the string. // This is for the filename of the download.
 
             element.style.display = 'none';
@@ -353,6 +358,21 @@ You should have received a copy of the GNU General Public License along with thi
             document.body.appendChild(element);
             element.click();
             document.body.removeChild(element);
+        }
+
+        function get_url_subpath() {
+            // Get the current URL
+            const url = window.location.href;
+            
+            // Get the subpath.
+            const urlObj = new URL(url);
+            const subpath = urlObj.pathname;
+
+            if( subpath == "/" ) {
+                return "";
+            } else {
+                return subpath;
+            }
         }
 
         function show_error_message( error_message ) {
@@ -485,7 +505,7 @@ You should have received a copy of the GNU General Public License along with thi
             };
 
             try {
-                const response = await fetch('/bsl/submit', {
+                const response = await fetch( get_url_subpath() + '/submit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -526,7 +546,7 @@ You should have received a copy of the GNU General Public License along with thi
                 const input_data = {
                     user_selected_videos: selected_videos
                 };
-                const response = await fetch('/bsl/submit_users_selected_videos', {
+                const response = await fetch( get_url_subpath() + '/submit_users_selected_videos', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
