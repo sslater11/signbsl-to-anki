@@ -354,8 +354,8 @@ function phrase_to_clean_string( str ){
 }
 
 function get_all_phrases_inside_quotes( str ) {
-    // Regular expression to match substrings inside single or double quotes
-    const regex = /(['"])(.*?)\1/g;
+    // Regular expression to match substrings inside double quotes
+    const regex = /(["])(.*?)\1/g;
     const phrases = [];
     let match;
 
@@ -373,8 +373,8 @@ function get_all_phrases_inside_quotes( str ) {
 
 function get_all_words( str ) {
     // Remove phrases from the string.
-    // Use a regular expression to match and remove substrings inside single or double quotes
-    str = str.replace(/(['"])(.*?)\1/g, '').trim();
+    // Use a regular expression to match and remove substrings inside double quotes
+    str = str.replace(/(["])(.*?)\1/g, '').trim();
     str = clean_string( str );
 
     if( str == "" ){
