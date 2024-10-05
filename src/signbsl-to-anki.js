@@ -181,8 +181,9 @@ function fake_download( url, file_output_path ) {
     console.log("fake download of " + url)
 }
 
-function get_all_video_url_and_names( html_file ) {
+function get_all_video_url_and_names( html_file, page_word ) {
     let command_output;
+    let word = "";
     
     all_words  = [];
     command_video_url_and_name = './video_url_and_name.py';
@@ -192,8 +193,9 @@ function get_all_video_url_and_names( html_file ) {
         list_of_videos_and_words = command_output.trim().split("\n");
 
         for( let i = 0; i < list_of_videos_and_words.length; i++ ){
-            const word  = list_of_videos_and_words[i].split("\t")[0];
+            word        = list_of_videos_and_words[i].split("\t")[0];
             const video = list_of_videos_and_words[i].split("\t")[1];
+            word = phrase_to_clean_string( word );
 
             // Does the word already exist in list?
             let word_index = -1;
@@ -214,6 +216,9 @@ function get_all_video_url_and_names( html_file ) {
             }
         }
     } catch (error) {
+        if( error.status == 100 ) {
+            return ["Error", "No results found for: \"" + page_word +"\"" ];
+        }
         console.error(`Error executing command: ${error.message}`);
         return [ "Error", error.message ];
     }
@@ -335,6 +340,51 @@ async function downloadAndConvertSingleVideo( word_and_videos, k ) {
     }
 }
 
+function clean_string( str ) {
+    // Only keeps alphabet letters, numbers, whitespace and hypens.
+    const result = str.trim().replace(/[^a-zA-Z\s\-0-9]/g, '').toLowerCase();
+    return result;
+}
+
+function phrase_to_clean_string( str ){
+        str = clean_string( str );
+        str = str.replace(/\s+/g, '-'); // Replace multiple whitespace with a single hyphen
+
+        return str;
+}
+
+function get_all_phrases_inside_quotes( str ) {
+    // Regular expression to match substrings inside single or double quotes
+    const regex = /(['"])(.*?)\1/g;
+    const phrases = [];
+    let match;
+
+    // Use the regex to find all matches in the string
+    while ((match = regex.exec(str)) !== null) {
+        const substring = phrase_to_clean_string( match[2] ); // match[2] contains the content inside the quotes.
+        if( substring != "" ){
+            phrases.push( substring );
+        }
+    }
+
+    return phrases;
+}
+
+
+function get_all_words( str ) {
+    // Remove phrases from the string.
+    // Use a regular expression to match and remove substrings inside single or double quotes
+    str = str.replace(/(['"])(.*?)\1/g, '').trim();
+    str = clean_string( str );
+
+    if( str == "" ){
+        return [];
+    } else {
+        return str.split(/\s+/);
+    }
+}
+
+
 //-----------------------\\
 // Main execution start. \\
 //-----------------------\\
@@ -342,38 +392,45 @@ module.exports = {
     Flashcard,
     scrape_signbsl : async function ( words ) {
         let id = generateRandomString(8);
-        let word = words[0];
-        word = word.toLowerCase(); // make words match.
-
-        const html_path = "./signbsl-html/" + word + "-signbsl.com.html";
-        console.log("Getting html file.");
-        
-        if( IS_SIMULATE_MODE ) {
-            fake_download( 'https://www.signbsl.com/sign/' + word, html_path );
-        } else {
-            download( 'https://www.signbsl.com/sign/' + word, html_path );
-        }
-        
-        console.log();
-        console.log("Extracting words and videos.");
-        let all_videos_and_words = null;
-        if( IS_SIMULATE_MODE ) {
-            all_videos_and_words = fake_get_all_video_url_and_names( html_path );
-        } else {
-            all_videos_and_words = get_all_video_url_and_names( html_path );
-        }
-
-        if( all_videos_and_words[0] == "Error" ) {
-            return all_videos_and_words;
-        }
-
-        if( await downloadAndConvertVideos( all_videos_and_words ) == false ) {
-            return[ "Error", "Failed to download or convert videos." ];
-        }
-
         let all_words = [];
-        for( let i = 0; i < all_videos_and_words.length; i++ ) {
-            all_words = all_words.concat( all_videos_and_words[i].toArrayWithConvertedVideoFile() );
+
+        let all_words_and_phrases = get_all_words( words ).concat( get_all_phrases_inside_quotes( words ) );
+
+        for( i = 0; i < all_words_and_phrases.length; i++ ) {
+            let word = all_words_and_phrases[i];
+            if( word == '' ) {
+                continue;
+            }
+
+            const html_path = "./signbsl-html/" + word + "-signbsl.com.html";
+            console.log("Getting html file.");
+        
+            if( IS_SIMULATE_MODE ) {
+                fake_download( 'https://www.signbsl.com/sign/' + word, html_path );
+            } else {
+                download( 'https://www.signbsl.com/sign/' + word, html_path );
+            }
+        
+            console.log();
+            console.log("Extracting words and videos.");
+            let all_videos_and_words = null;
+            if( IS_SIMULATE_MODE ) {
+                all_videos_and_words = fake_get_all_video_url_and_names( html_path );
+            } else {
+                all_videos_and_words = get_all_video_url_and_names( html_path, word );
+            }
+
+            if( all_videos_and_words[0] == "Error" ) {
+                return all_videos_and_words;
+            }
+
+            if( await downloadAndConvertVideos( all_videos_and_words ) == false ) {
+                return[ "Error", "Failed to download or convert videos." ];
+            }
+
+            for( let k = 0; k < all_videos_and_words.length; k++ ) {
+                all_words = all_words.concat( all_videos_and_words[k].toArrayWithConvertedVideoFile() );
+            }
         }
 
         return [ id, all_words ];

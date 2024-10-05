@@ -32,7 +32,7 @@ app.post('/submit', async (req, res) => {
     const { text_input } = req.body;
 
     // Download all videos and words.
-    all_videos_and_words = await signbsl.scrape_signbsl(text_input.split(" "));
+    all_videos_and_words = await signbsl.scrape_signbsl( text_input );
 
     // Send a response back to the client.
     res.json( all_videos_and_words );

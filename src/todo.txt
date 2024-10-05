@@ -1,16 +1,7 @@
 Make a search history down the side of the screen to see previous words and whether they're in the deck or not.
 	Highlight green for "card in deck" and red for "failed searches" where it had no words or user failed to create a deck.
 
-allow phrases to be searched like "one week"
-
 delete cache files after x days.
 
-make it multithreaded so it downloads all videos at once and converts them.
-
 when another word's videos come up, download the webpage for it and count how many videos there are for it.
-
-
-manage symbols in words - remove apostrophe and hyphens and question marks and possibly brackets and commas
-	The word 'small' crashes the server as it has a comma in the last video title "small , tiny"
-	The comma is then passed to the filename and well just run it and see it crash.
 

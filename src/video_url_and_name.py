@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 html_contents = open( sys.argv[1] ,"r" )
 soup = BeautifulSoup(html_contents, 'html.parser')
 
+result = ""
 for video_div in soup.findAll('div', attrs={'itemprop':'video'}):
     if (  ( video_div != None )  and  ( video_div.find('source') != None )  ):
         url = str( video_div.find('source').get("src") )
@@ -24,4 +25,9 @@ for video_div in soup.findAll('div', attrs={'itemprop':'video'}):
         word_text = word_text.replace("</i>","")
         word_text = word_text.lower().strip()
 
-        print( word_text + "\t" + url)
+        result = result + "\n" + word_text + "\t" + url
+
+if result == "":
+    sys.exit(100)
+else:
+    print( result )
