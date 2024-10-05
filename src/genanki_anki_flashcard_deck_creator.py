@@ -34,7 +34,7 @@ class SignLanguageCard:
         self.db_line = db_line
         all_elements = db_line.split( self.DIVIDER )
 
-        self.card_word        = all_elements[0]
+        self.card_word        = all_elements[0].replace("-"," ")
         self.guid_key         = all_elements[1]
         self.card_model_type  = all_elements[2]
         self.card_media_files = all_elements[3]
