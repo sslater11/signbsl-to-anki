@@ -16,6 +16,9 @@ const { execSync } = require('child_process');
 const crypto = require('crypto');
 const { allowedNodeEnvironmentFlags } = require("process");
 
+const util = require('util');
+const execPromise = util.promisify( exec );
+
 const IS_SIMULATE_MODE = false;
 
 /* TODO:
@@ -257,21 +260,32 @@ function getAllDBLinesFromEveryDeck() {
     return all_db_lines
 }
 
-function downloadAndConvertVideos( all_videos_and_words ) {
+async function downloadAndConvertVideos( all_videos_and_words ) {
+    try{
+    // Fix indent on next git push.
+    //Download and convert on multiple threads using promises.
+    let promises = [];
     for( let i = 0; i < all_videos_and_words.length; i++ ) {
         console.log(" all_videos_and_words ")
         console.log( all_videos_and_words )
         const word_and_videos = all_videos_and_words[i];
         const number_of_videos = word_and_videos.getVideoURLs().length;
         for( let k = 0; k < number_of_videos; k++ ) {
-            if( downloadAndConvertSingleVideo( all_videos_and_words[i], k ) == false ) {
-                return false;
-            }
+            promises.push( downloadAndConvertSingleVideo( all_videos_and_words[i], k ) );
         }
+        // Wait for all downloading and converting to be finished.
+        await Promise.all( promises );
     }
+    } catch( error ) {
+        return false;
+    }
+
+    return true;
 }
 
-function downloadAndConvertSingleVideo( word_and_videos, k ) {
+async function downloadAndConvertSingleVideo( word_and_videos, k ) {
+    try{
+    // Fix indent on next git push.
     // Download all videos
     const url = word_and_videos.getVideoURLs()[k];
     let file_path = "";
@@ -280,7 +294,7 @@ function downloadAndConvertSingleVideo( word_and_videos, k ) {
         file_path = "./public/cache/" + fakeGenerateFileNameForWord( url , '');
     } else {
         if( url === undefined || url === null ) {
-            return[ "Error", "No videos for " + word ];
+            throw new Error( "Error: No videos for " + word );
         } else {
             const file_extension = path.extname( url );
             file_path = "./public/cache/" + generateFileNameForWord( word_and_videos.getWord(), file_extension );
@@ -291,7 +305,11 @@ function downloadAndConvertSingleVideo( word_and_videos, k ) {
     if( IS_SIMULATE_MODE ) {
         fake_download( url, file_path);
     } else {
-        download( url, file_path);
+        try {
+            const download_command_output = await execPromise('wget "' + url + '" -O "' + file_path + '"' , { encoding: 'utf-8' });
+        } catch ( error ) {
+            throw error;
+        }
     }
 
     console.log("Converting to webm...")
@@ -302,19 +320,21 @@ function downloadAndConvertSingleVideo( word_and_videos, k ) {
     if( IS_SIMULATE_MODE ) {
         console.log( "fake converting to webm for file " + file_path + " to " + webm_file_name );
     } else {
-        ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" "./public/cache/' + webm_file_name + '"'
+        ffmpeg_command = 'ffmpeg -threads 4 -ss 00:00:00 -i "' + file_path + '" "./public/cache/' + webm_file_name + '"'
         //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -filter_complex "[0:v] fps=15;" "' + webm_file_name + '"'
         //ffmpeg_command = 'ffmpeg -ss 00:00:00 -i "' + file_path + '" -vf scale=iw*1:ih*1 "' + gif_file_path + '"'
 
         try {
-            let command_ouput = execSync(ffmpeg_command, { encoding: 'utf-8' });
+            let command_ouput = await execPromise(ffmpeg_command, { encoding: 'utf-8' });
         } catch (error) {
             console.error(`Error executing command: ${error.message}`);
-            return false;
+            throw error;
         }
     }
-
-    return true;
+    } catch ( error ) {
+        console.error( "Oh cheese no! " + error );
+        throw error;
+    }
 }
 
 //-----------------------\\
@@ -322,7 +342,7 @@ function downloadAndConvertSingleVideo( word_and_videos, k ) {
 //-----------------------\\
 module.exports = {
     Flashcard,
-    scrape_signbsl : function ( words ) {
+    scrape_signbsl : async function ( words ) {
         let id = generateRandomString(8);
         let word = words[0];
         word = word.toLowerCase(); // make words match.
@@ -349,8 +369,8 @@ module.exports = {
             return all_videos_and_words;
         }
 
-        if( downloadAndConvertVideos( all_videos_and_words ) == false ) {
-            return[ "Error", "Failed to convert video." ];
+        if( await downloadAndConvertVideos( all_videos_and_words ) == false ) {
+            return[ "Error", "Failed to download or convert videos." ];
         }
 
         let all_words = [];
