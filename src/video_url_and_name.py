@@ -18,8 +18,9 @@ result = ""
 for video_div in soup.findAll('div', attrs={'itemprop':'video'}):
     if (  ( video_div != None )  and  ( video_div.find('source') != None )  ):
         url = str( video_div.find('source').get("src") )
+        word_location_div = video_div.find('div', attrs={'class':'float-start'} )
 
-        word_text = "" + str(video_div.find('i'))
+        word_text = "" + str(word_location_div.find('i'))
 
         word_text = word_text.replace("<i>","")
         word_text = word_text.replace("</i>","")
