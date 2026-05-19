@@ -125,7 +125,13 @@ css = '''.card {
     text-align: center;
     color: black;
     background-color: white;
-}'''
+}
+
+// These lines hide the pause button that
+// displays over the whole video on auto start on Android.
+video::-webkit-media-controls { display:none !important; }
+video::-webkit-media-controls-enclosure { display:none !important; }
+'''
 
 my_video_model = genanki.Model(
     9681166405,
